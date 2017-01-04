@@ -1,0 +1,53 @@
+<resources>
+    <string name="app_name">CELUK</string>
+
+    <!-- Strings related to login -->
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign In</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="error_invalid_email">This email address is invalid</string>
+    <string name="error_invalid_password">This password is invalid</string>
+    <string name="error_incorrect_password">This password is incorrect</string>
+    <string name="error_field_required">This field is required</string>
+    <string name="permission_rationale">"Contacts permissions are needed for providing email completions."</string>
+
+    <string name="title_activity_main">MainActivity</string>
+    <string name="caller">CALLER</string>
+    <string name="receiver">RECEIVER</string>
+
+    <string name="title_activity_caller">CELUK CALLER</string>
+    <string name="action_settings">Settings</string>
+    <string name="req_receiver_label">Enter RECEIVER email</string>
+    <string name="prompt_email_receiver">Receiver Email</string>
+    <string name="send_request">send request</string>
+    <string name="active_receiver_label">ACTIVE RECEIVER</string>
+    <string name="call">call</string>
+    <string name="title_activity_tes">TesActivity</string>
+    <string name="title_activity_receiver">CELUK RECEIVER</string>
+
+    <string name="req_caller_label">Request from a CALLER</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="ready">READY</string>
+    <string name="call_you">CALL you</string>
+    <string name="okay">okay</string>
+
+
+    <string name="desc_firebase_lockup">Firebase logo and name</string>
+    <string name="celuk_login">CELUK LOGIN</string>
+    <string name="signed_out">Signed Out</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Password</string>
+    <string name="sign_in">SIGN IN</string>
+    <string name="sign_up">SIGN UP</string>
+    <string name="sign_out">SIGN OUT</string>
+    <string name="auth_failed">Authentication Failed</string>
+    <string name="loading">Loading...</string>
+    <string name="title_activity_regis">Registrasi User</string>
+    <string name="prompt_name">Name</string>
+    <string name="prompt_phone">Phone Number</string>
+    <string name="create_user">Create User</string>
+
+</resources>

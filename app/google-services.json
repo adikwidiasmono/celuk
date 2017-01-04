@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "1003682833518",
+    "firebase_url": "https://celuk-901ae.firebaseio.com",
+    "project_id": "celuk-901ae",
+    "storage_bucket": "celuk-901ae.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1003682833518:android:d80088e750af1a3f",
+        "android_client_info": {
+          "package_name": "com.celuk.main"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1003682833518-cjg090finm7569nc7gksrgom7hr2grgq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgBosioI5AuAJsPog4ge0Rl9d3fHtuzTc"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,92 @@
+<resources>
+
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:colorBackground">@color/background_material_light</item>
+        <item name="android:navigationBarColor">@color/c_black</item>
+
+        <!-- Title Text Color -->
+        <item name="android:textColorPrimary">@color/c_black</item>
+
+        <!-- Custom button style-->
+        <item name="android:buttonStyle">@style/celuk_button</item>
+        <item name="android:colorControlHighlight">@color/c_red</item>
+        <item name="android:colorButtonNormal">@color/colorAccent</item>
+    </style>
+
+    <style name="celuk_button" parent="@android:style/Widget.Material.Button">
+        <!--<item name="android:textStyle">bold</item>-->
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/c_white</item>
+    </style>
+
+    <style name="AppTheme.CusAppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+
+    <style name="AppTheme.CusToolBarOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="error_appearance" parent="@android:style/TextAppearance">
+        <item name="android:textColor">@color/c_white</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="MyCustomTabLayout" parent="Widget.Design.TabLayout">
+        <item name="tabGravity">center</item>
+        <item name="tabIndicatorColor">@color/c_white</item>
+        <item name="tabIndicatorHeight">3dp</item>
+        <!--<item name="tabBackground">?attr/colorPrimary</item>-->
+        <item name="tabTextAppearance">@style/MyCustomTabTextAppearance</item>
+        <item name="tabSelectedTextColor">@color/c_white</item>
+    </style>
+
+    <style name="MyCustomTabTextAppearance" parent="TextAppearance.Design.Tab">
+        <item name="textAllCaps">false</item>
+        <item name="android:textColor">@color/c_gray</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="MyCustomRedeemDialogStyle" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">@color/colorPrimary</item>
+        <item name="android:textColorPrimary">@color/c_gray</item>
+        <item name="android:windowTitleStyle">@style/MyCustomDialogTitleTextStyle</item>
+        <item name="android:background">@color/c_white</item>
+    </style>
+
+    <style name="MyCustomDialogTitleTextStyle">
+        <item name="android:textColor">@color/c_black</item>
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Title</item>
+    </style>
+
+
+    <style name="ThemeOverlay.FirebaseIcon" parent="AppTheme">
+        <item name="android:layout_marginTop">@dimen/icon_top_margin</item>
+        <item name="android:layout_marginBottom">@dimen/icon_bottom_margin</item>
+    </style>
+
+    <style name="ThemeOverlay.MyTitleText" parent="AppTheme">
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">36sp</item>
+    </style>
+
+    <style name="ThemeOverlay.MyTextDetail" parent="AppTheme">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:fadeScrollbars">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">5</item>
+        <item name="android:padding">4dp</item>
+        <item name="android:scrollbars">vertical</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <!-- Dark Buttons -->
+    <style name="ThemeOverlay.MyDarkButton" parent="ThemeOverlay.AppCompat.Dark">
+        <item name="colorButtonNormal">@color/colorAccent</item>
+        <item name="android:layout_marginRight">4dp</item>
+        <item name="android:layout_marginLeft">4dp</item>
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+</resources>
