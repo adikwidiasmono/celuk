@@ -35,6 +35,7 @@ dependencies {
     compile "com.android.support:support-v4:$androidSupportVersion"
 
     compile "com.google.android.gms:play-services-maps:$gmsVersion"
+    compile "com.google.android.gms:play-services-location:$gmsVersion"
 
     compile "com.google.code.gson:gson:2.7"
 

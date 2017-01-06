@@ -15,6 +15,5 @@ public class CelukState {
 
     // User active as RECEIVER
     public final static int RECEIVER_READY = 4; // RECEIVER ready to get a call by CALLER
-    public final static int RECEIVER_GET_CALL = 5; // RECEIVER get a call but hasn't answered it
-    public final static int RECEIVER_ACCEPT_CALL = 6; // RECEIVER accept CALLER's call then go to CALLER place
+    public final static int RECEIVER_ACCEPT_CALL = 5; // RECEIVER accept CALLER's call then go to CALLER place
 }

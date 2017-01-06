@@ -28,7 +28,7 @@
         android:textColor="@color/c_green"
         android:textStyle="bold" />
 
-    <fragment
+    <com.google.android.gms.maps.MapView
         android:id="@+id/mv_caller"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

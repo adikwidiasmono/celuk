@@ -13,6 +13,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.celuk.database.model.CelukRequest;
+import com.celuk.database.model.CelukUser;
 import com.celuk.main.LoginActivity;
 import com.celuk.main.R;
 import com.google.firebase.database.DataSnapshot;
@@ -98,8 +99,12 @@ public class CallerReadyFragment extends Fragment {
                 if (!request.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT))
                     return;
 
-                if (tvReceiverEmail != null)
-                    tvReceiverEmail.setText(request.getReceiver());
+                if (tvReceiverEmail != null) {
+                    if (celukState == CelukState.CALLER_CALL_RECEIVER)
+                        tvReceiverEmail.setText(request.getReceiver() + tvReceiverEmail.getText().toString());
+                    else
+                        tvReceiverEmail.setText(request.getReceiver());
+                }
             }
 
             @Override
@@ -129,6 +134,10 @@ public class CallerReadyFragment extends Fragment {
         });
 
         btCallReceiver = (Button) view.findViewById(R.id.bt_call_receiver);
+        if (celukState == CelukState.CALLER_CALL_RECEIVER) {
+            tvReceiverEmail.setText(tvReceiverEmail.getText().toString() + " [HASN'T ANSWER YET]");
+            btCallReceiver.setText("RECALL");
+        }
         btCallReceiver.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -136,18 +145,17 @@ public class CallerReadyFragment extends Fragment {
                     return;
 
                 if (mListener != null) {
-                    mListener.onCallerCallReceiver(CelukState.CALLER_CALL_RECEIVER);
+                    // Update Caller state. After Caller state updated, it will trigger notification(Caller is calling) in Receiver
+                    DatabaseReference mCallerReference = mCelukReference
+                            .child("users").child(((CallerActivity) getActivity()).getUserUid());
+                    CelukUser celukUser = shared.getCurrentUser();
+                    celukUser.setPairedState(CelukState.CALLER_CALL_RECEIVER);
 
-//                // TODO : Send alert to RECEIVER
-//                DatabaseReference mUserReference = mCelukReference
-//                        .child("users").child(((CallerActivity) getActivity()).getUserUid());
-//                CelukUser celukUser = shared.getCurrentUser();
-//                celukUser.setPairedState(CelukState.CALLER_CALL_RECEIVER);
-//
-//                mUserReference.setValue(celukUser);
-//                shared.setCurrentUser(celukUser);
+                    mCallerReference.setValue(celukUser);
+                    shared.setCurrentUser(celukUser);
 
                     Toast.makeText(getContext(), "Calling " + tvReceiverEmail.getText().toString() + " ...", Toast.LENGTH_SHORT).show();
+                    mListener.onCallerCallReceiver(CelukState.CALLER_CALL_RECEIVER);
                 }
             }
         });

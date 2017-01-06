@@ -1,5 +1,6 @@
 package com.celuk.receiver;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -12,7 +13,8 @@ import com.utils.CelukState;
 
 public class ReceiverActivity extends BaseActivity implements
         ReceiverRequestFragment.OnFragmentInteractionListener,
-        ReceiverReadyFragment.OnFragmentInteractionListener {
+        ReceiverReadyFragment.OnFragmentInteractionListener,
+        ReceiverTrackerFragment.OnFragmentInteractionListener {
 
     private boolean isReady;
     private boolean isResume;
@@ -132,5 +134,17 @@ public class ReceiverActivity extends BaseActivity implements
     @Override
     public void onStopAsReceiver(int nextState, String requestId) {
         updateReceiverState(nextState, requestId);
+    }
+
+    @Override
+    public void onChangeReceiverLocation(double latitude, double longitude) {
+        CelukUser user = shared.getCurrentUser();
+        user.setLatitude(latitude);
+        user.setLongitude(longitude);
+        shared.setCurrentUser(user);
+
+        mDatabase.child("users")
+                .child(getUserUid())
+                .setValue(user);
     }
 }

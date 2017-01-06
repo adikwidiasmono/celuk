@@ -11,7 +11,8 @@ import com.celuk.parent.BaseActivity;
 import com.utils.CelukState;
 
 public class CallerActivity extends BaseActivity implements
-        CallerReadyFragment.OnFragmentInteractionListener {
+        CallerReadyFragment.OnFragmentInteractionListener,
+        CallerTrackerFragment.OnFragmentInteractionListener {
 
     private boolean isReady;
     private boolean isResume;
@@ -88,7 +89,7 @@ public class CallerActivity extends BaseActivity implements
                 break;
             case CelukState.CALLER_CALL_RECEIVER:
                 isReady = true;
-                activeFragment = CallerTrackerFragment.newInstance(CelukState.CALLER_CALL_RECEIVER, "Caller Call Receiver");
+                activeFragment = CallerReadyFragment.newInstance(CelukState.CALLER_CALL_RECEIVER, "Caller Call Receiver");
                 break;
             case CelukState.CALLER_WAIT_RECEIVER:
                 isReady = true;
@@ -126,5 +127,17 @@ public class CallerActivity extends BaseActivity implements
     @Override
     public void onReceiverStop(int nextState) {
         updateCallerState(nextState);
+    }
+
+    @Override
+    public void onChangeCallerLocation(double latitude, double longitude) {
+        CelukUser user = shared.getCurrentUser();
+        user.setLatitude(latitude);
+        user.setLongitude(longitude);
+        shared.setCurrentUser(user);
+
+        mDatabase.child("users")
+                .child(getUserUid())
+                .setValue(user);
     }
 }
