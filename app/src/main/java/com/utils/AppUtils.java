@@ -44,9 +44,9 @@ public class AppUtils {
                 case CelukState.RECEIVER_READY:
                     actionClass = ReceiverActivity.class;
                     break;
-                case CelukState.RECEIVER_GET_CALL:
-                    actionClass = ReceiverActivity.class;
-                    break;
+//                case CelukState.RECEIVER_GET_CALL:
+//                    actionClass = ReceiverActivity.class;
+//                    break;
                 case CelukState.RECEIVER_ACCEPT_CALL:
                     actionClass = ReceiverActivity.class;
                     break;

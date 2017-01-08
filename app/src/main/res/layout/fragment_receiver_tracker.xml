@@ -14,7 +14,7 @@
         android:id="@+id/tv_caller_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/receiver"
+        android:text="@string/caller"
         android:textColor="@color/c_green" />
 
     <TextView

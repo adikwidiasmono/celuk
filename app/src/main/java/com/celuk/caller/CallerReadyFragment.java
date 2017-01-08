@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,8 +34,6 @@ import com.utils.CelukState;
  * create an instance of this fragment.
  */
 public class CallerReadyFragment extends Fragment {
-    private static final String CELUK_STATE = "celukState";
-    private static final String FRAGMENT_NAME = "fragmentName";
 
     private int celukState;
     private String fragmentName;
@@ -45,6 +44,8 @@ public class CallerReadyFragment extends Fragment {
 
     private TextView tvReceiverEmail;
     private Button btCallReceiver;
+
+    private String receiverEmail;
 
     private OnFragmentInteractionListener mListener;
 
@@ -62,20 +63,14 @@ public class CallerReadyFragment extends Fragment {
      */
     public static CallerReadyFragment newInstance(int celukState, String fragmentName) {
         CallerReadyFragment fragment = new CallerReadyFragment();
-        Bundle args = new Bundle();
-        args.putInt(CELUK_STATE, celukState);
-        args.putString(FRAGMENT_NAME, fragmentName);
-        fragment.setArguments(args);
+        fragment.celukState = celukState;
+        fragment.fragmentName = fragmentName;
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            celukState = getArguments().getInt(CELUK_STATE);
-            fragmentName = getArguments().getString(FRAGMENT_NAME);
-        }
 
         shared = new CelukSharedPref(getContext());
         mCelukReference = FirebaseDatabase.getInstance().getReference();
@@ -100,8 +95,9 @@ public class CallerReadyFragment extends Fragment {
                     return;
 
                 if (tvReceiverEmail != null) {
+                    receiverEmail = request.getReceiver();
                     if (celukState == CelukState.CALLER_CALL_RECEIVER)
-                        tvReceiverEmail.setText(request.getReceiver() + tvReceiverEmail.getText().toString());
+                        tvReceiverEmail.setText(receiverEmail + "\n[HASN'T ANSWER YET]");
                     else
                         tvReceiverEmail.setText(request.getReceiver());
                 }
@@ -135,7 +131,8 @@ public class CallerReadyFragment extends Fragment {
 
         btCallReceiver = (Button) view.findViewById(R.id.bt_call_receiver);
         if (celukState == CelukState.CALLER_CALL_RECEIVER) {
-            tvReceiverEmail.setText(tvReceiverEmail.getText().toString() + " [HASN'T ANSWER YET]");
+            if (receiverEmail != null)
+                tvReceiverEmail.setText(receiverEmail + "\n[HASN'T ANSWER YET]");
             btCallReceiver.setText("RECALL");
         }
         btCallReceiver.setOnClickListener(new View.OnClickListener() {
@@ -154,7 +151,7 @@ public class CallerReadyFragment extends Fragment {
                     mCallerReference.setValue(celukUser);
                     shared.setCurrentUser(celukUser);
 
-                    Toast.makeText(getContext(), "Calling " + tvReceiverEmail.getText().toString() + " ...", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Calling " + receiverEmail + " ...", Toast.LENGTH_SHORT).show();
                     mListener.onCallerCallReceiver(CelukState.CALLER_CALL_RECEIVER);
                 }
             }

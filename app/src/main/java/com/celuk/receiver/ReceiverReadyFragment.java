@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,9 +37,6 @@ import com.utils.CelukState;
 public class ReceiverReadyFragment extends Fragment {
     private final static String TAG = ReceiverReadyFragment.class.getCanonicalName();
 
-    private static final String CELUK_STATE = "celukState";
-    private static final String FRAGMENT_NAME = "fragmentName";
-
     private int celukState;
     private String fragmentName;
     private CelukUser celukCaller;
@@ -65,20 +63,14 @@ public class ReceiverReadyFragment extends Fragment {
      */
     public static ReceiverReadyFragment newInstance(int celukState, String fragmentName) {
         ReceiverReadyFragment fragment = new ReceiverReadyFragment();
-        Bundle args = new Bundle();
-        args.putInt(CELUK_STATE, celukState);
-        args.putString(FRAGMENT_NAME, fragmentName);
-        fragment.setArguments(args);
+        fragment.celukState = celukState;
+        fragment.fragmentName = fragmentName;
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            celukState = getArguments().getInt(CELUK_STATE);
-            fragmentName = getArguments().getString(FRAGMENT_NAME);
-        }
 
         shared = new CelukSharedPref(getContext());
         mCelukReference = FirebaseDatabase.getInstance().getReference();
@@ -109,6 +101,7 @@ public class ReceiverReadyFragment extends Fragment {
                         if (dataSnapshot == null || dataSnapshot.getChildrenCount() != 1)
                             return;
 
+                        final DatabaseReference callerRef = dataSnapshot.getChildren().iterator().next().getRef();
                         celukCaller = dataSnapshot.getChildren().iterator().next()
                                 .getValue(CelukUser.class);
                         if (celukCaller == null)
@@ -120,8 +113,7 @@ public class ReceiverReadyFragment extends Fragment {
                             // Update Celuk Caller State if Celuk Receiver do Stop As Receiver
                             celukCaller.setPairedState(CelukState.CELUK_NO_ASSIGNMENT);
                             celukCaller.setRequestId(null);
-                            dataSnapshot.getChildren().iterator().next()
-                                    .getRef().setValue(celukCaller);
+                            callerRef.setValue(celukCaller);
 
                             // Update receiver to duty free
                             mListener.onStopAsReceiver(CelukState.CELUK_NO_ASSIGNMENT, null);
@@ -136,13 +128,14 @@ public class ReceiverReadyFragment extends Fragment {
                                         public void onClick(DialogInterface dialog, int which) {
                                             if (mListener != null) {
                                                 celukCaller.setPairedState(CelukState.CALLER_WAIT_RECEIVER);
-                                                qCaller.getRef().setValue(celukCaller);
+                                                callerRef.setValue(celukCaller);
 
                                                 mListener.onCallerAcceptCall(CelukState.RECEIVER_ACCEPT_CALL, shared.getCurrentUser().getRequestId());
                                             }
                                         }
                                     })
                                     .setIcon(android.R.drawable.ic_dialog_alert)
+                                    .setCancelable(false)
                                     .show();
                     }
 

@@ -58,9 +58,6 @@ public class ReceiverTrackerFragment extends Fragment implements
         LocationListener {
     private final static String TAG = ReceiverTrackerFragment.class.getCanonicalName();
 
-    private static final String CELUK_STATE = "celukState";
-    private static final String FRAGMENT_NAME = "fragmentName";
-
     private int celukState;
     private String fragmentName;
     private String callerPhoneNumber;
@@ -95,20 +92,14 @@ public class ReceiverTrackerFragment extends Fragment implements
      */
     public static ReceiverTrackerFragment newInstance(int celukState, String fragmentName) {
         ReceiverTrackerFragment fragment = new ReceiverTrackerFragment();
-        Bundle args = new Bundle();
-        args.putInt(CELUK_STATE, celukState);
-        args.putString(FRAGMENT_NAME, fragmentName);
-        fragment.setArguments(args);
+        fragment.celukState = celukState;
+        fragment.fragmentName = fragmentName;
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            celukState = getArguments().getInt(CELUK_STATE);
-            fragmentName = getArguments().getString(FRAGMENT_NAME);
-        }
 
         shared = new CelukSharedPref(getContext());
         mCelukReference = FirebaseDatabase.getInstance().getReference();
