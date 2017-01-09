@@ -12,7 +12,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v4.content.res.ResourcesCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,10 +20,10 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.celuk.database.model.CelukPair;
+import com.celuk.database.model.CelukRequest;
 import com.celuk.database.model.CelukUser;
+import com.celuk.main.LoginActivity;
 import com.celuk.main.R;
-import com.celuk.receiver.ReceiverTrackerFragment;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -51,6 +50,8 @@ public class CallerTrackerFragment extends Fragment implements
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
+    private final static String TAG = CallerTrackerFragment.class.getCanonicalName();
+    private final static int LOCATION_REQUEST_PERMISSION = 99;
 
     private int celukState;
     private String fragmentName;
@@ -59,6 +60,7 @@ public class CallerTrackerFragment extends Fragment implements
 
     private CelukSharedPref shared;
     private DatabaseReference mCelukReference;
+    private DatabaseReference celukRequestReference;
 
     private OnFragmentInteractionListener mListener;
 
@@ -70,8 +72,8 @@ public class CallerTrackerFragment extends Fragment implements
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
 
-    private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
-    private long FASTEST_INTERVAL = 2000; /* 2 sec */
+    private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
+    private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
 
     public CallerTrackerFragment() {
         // Required empty public constructor
@@ -99,26 +101,26 @@ public class CallerTrackerFragment extends Fragment implements
         shared = new CelukSharedPref(getContext());
         mCelukReference = FirebaseDatabase.getInstance().getReference();
 
-        final Query qPair = mCelukReference
-                .child("pairs")
-                .orderByChild("caller").equalTo(shared.getCurrentUser().getEmail());
-        qPair.addValueEventListener(new ValueEventListener() {
+        celukRequestReference = mCelukReference
+                .child("requests")
+                .child(shared.getCurrentUser().getRequestId());
+        celukRequestReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                CelukPair pair = dataSnapshot.getValue(CelukPair.class);
-                if (pair == null)
+                CelukRequest celukRequest = dataSnapshot.getValue(CelukRequest.class);
+                if (celukRequest == null)
                     return;
 
-                if (pair.getStatus().equalsIgnoreCase(CelukPair.PAIR_STATUS_INACTIVE))
+                if (!celukRequest.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT))
                     return;
 
                 if (tvReceiverEmail != null)
-                    tvReceiverEmail.setText(pair.getReceiver());
+                    tvReceiverEmail.setText(celukRequest.getReceiver());
 
                 // Get receiver location
                 Query qReceiver = mCelukReference
                         .child("users")
-                        .orderByChild("email").equalTo(pair.getReceiver());
+                        .orderByChild("email").equalTo(celukRequest.getReceiver());
                 qReceiver.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
@@ -126,19 +128,15 @@ public class CallerTrackerFragment extends Fragment implements
                         if (celukReceiver == null)
                             return;
 
-                        if (celukReceiver.getLatitude() == null || celukReceiver.getLongitude() == null)
-                            return;
-
-                        Log.e("RECEIVER LOC", "Lat : " + celukReceiver.getLatitude() + ", " + "Long : " + celukReceiver.getLongitude());
                         if (celukReceiver.getLatitude() == null)
                             receiverLatitude = 0;
                         else
                             receiverLatitude = celukReceiver.getLatitude();
-
                         if (celukReceiver.getLongitude() == null)
                             receiverLongitude = 0;
                         else
                             receiverLongitude = celukReceiver.getLongitude();
+                        Log.e("RECEIVER LOC", "Lat : " + receiverLatitude + ", " + "Long : " + receiverLongitude);
 
                         receiverPhoneNumber = celukReceiver.getPhone();
                     }
@@ -183,6 +181,17 @@ public class CallerTrackerFragment extends Fragment implements
             }
         });
 
+        TextView tvSignOut = (TextView) view.findViewById(R.id.tv_sign_out);
+        tvSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((CallerActivity) getActivity()).signOut();
+                Intent intent = new Intent(getContext(), LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+            }
+        });
+
         // Define google map here
         setupMap(view, savedInstanceState);
 
@@ -217,13 +226,15 @@ public class CallerTrackerFragment extends Fragment implements
             public void onMapReady(GoogleMap mMap) {
                 googleMap = mMap;
 
-                // For showing a move to my location button
-                if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED) {
-                    mMap.setMyLocationEnabled(true);
-                } else {
-                    // Show rationale and request permission.
+                // Check location permission
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(),
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                            LOCATION_REQUEST_PERMISSION);
+                    return;
                 }
+                mMap.setMyLocationEnabled(true);
 
                 // For dropping a marker at a point on the Map
                 LatLng receiverLoc = new LatLng(receiverLatitude, receiverLongitude);
@@ -301,13 +312,9 @@ public class CallerTrackerFragment extends Fragment implements
         // Get last known recent location.
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST_PERMISSION);
             return;
         }
         Location mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -331,13 +338,9 @@ public class CallerTrackerFragment extends Fragment implements
         // Request location updates
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST_PERMISSION);
             return;
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,

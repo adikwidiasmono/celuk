@@ -17,11 +17,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.celuk.database.model.CelukPair;
+import com.celuk.database.model.CelukRequest;
 import com.celuk.database.model.CelukUser;
+import com.celuk.main.LoginActivity;
 import com.celuk.main.R;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -57,6 +59,7 @@ public class ReceiverTrackerFragment extends Fragment implements
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
     private final static String TAG = ReceiverTrackerFragment.class.getCanonicalName();
+    private final static int LOCATION_REQUEST_PERMISSION = 99;
 
     private int celukState;
     private String fragmentName;
@@ -65,6 +68,7 @@ public class ReceiverTrackerFragment extends Fragment implements
 
     private CelukSharedPref shared;
     private DatabaseReference mCelukReference;
+    private DatabaseReference celukRequestReference;
 
     private OnFragmentInteractionListener mListener;
 
@@ -75,8 +79,8 @@ public class ReceiverTrackerFragment extends Fragment implements
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
 
-    private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
-    private long FASTEST_INTERVAL = 2000; /* 2 sec */
+    private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
+    private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
 
     public ReceiverTrackerFragment() {
         // Required empty public constructor
@@ -104,46 +108,42 @@ public class ReceiverTrackerFragment extends Fragment implements
         shared = new CelukSharedPref(getContext());
         mCelukReference = FirebaseDatabase.getInstance().getReference();
 
-        final Query qPair = mCelukReference
-                .child("pairs")
-                .orderByChild("receiver").equalTo(shared.getCurrentUser().getEmail());
-        qPair.addValueEventListener(new ValueEventListener() {
+        celukRequestReference = mCelukReference
+                .child("requests")
+                .child(shared.getCurrentUser().getRequestId());
+        celukRequestReference.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                CelukPair pair = dataSnapshot.getValue(CelukPair.class);
-                if (pair == null)
+                CelukRequest celukRequest = dataSnapshot.getValue(CelukRequest.class);
+                if (celukRequest == null)
                     return;
 
-                if (pair.getStatus().equalsIgnoreCase(CelukPair.PAIR_STATUS_INACTIVE))
+                if (!celukRequest.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT))
                     return;
 
                 if (tvCallerEmail != null)
-                    tvCallerEmail.setText(pair.getCaller());
+                    tvCallerEmail.setText(celukRequest.getCaller());
 
                 // Get caller location
-                Query qReceiver = mCelukReference
+                Query qCaller = mCelukReference
                         .child("users")
-                        .orderByChild("email").equalTo(pair.getCaller());
-                qReceiver.addValueEventListener(new ValueEventListener() {
+                        .orderByChild("email").equalTo(celukRequest.getCaller());
+                qCaller.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
                         CelukUser celukCaller = dataSnapshot.getValue(CelukUser.class);
                         if (celukCaller == null)
                             return;
 
-                        if (celukCaller.getLatitude() == null || celukCaller.getLongitude() == null)
-                            return;
-
-                        Log.e("CALLER LOC", "Lat : " + celukCaller.getLatitude() + ", " + "Long : " + celukCaller.getLongitude());
                         if (celukCaller.getLatitude() == null)
                             callerLatitude = 0;
                         else
                             callerLatitude = celukCaller.getLatitude();
-
                         if (celukCaller.getLongitude() == null)
                             callerLongitude = 0;
                         else
                             callerLongitude = celukCaller.getLongitude();
+                        Log.e("RECEIVER LOC", "Lat : " + callerLatitude + ", " + "Long : " + callerLongitude);
 
                         callerPhoneNumber = celukCaller.getPhone();
                     }
@@ -169,6 +169,7 @@ public class ReceiverTrackerFragment extends Fragment implements
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_receiver_tracker, container, false);
+
         tvCallerEmail = (TextView) view.findViewById(R.id.tv_caller_email);
         fabCallCallerPhone = (FloatingActionButton) view.findViewById(R.id.fab_call_caller_phone);
         fabCallCallerPhone.setOnClickListener(new View.OnClickListener() {
@@ -176,6 +177,17 @@ public class ReceiverTrackerFragment extends Fragment implements
             public void onClick(View v) {
                 Uri number = Uri.parse("tel:" + callerPhoneNumber);
                 startActivity(new Intent(Intent.ACTION_DIAL, number));
+            }
+        });
+
+        TextView tvSignOut = (TextView) view.findViewById(R.id.tv_sign_out);
+        tvSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ((ReceiverActivity) getActivity()).signOut();
+                Intent intent = new Intent(getContext(), LoginActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
             }
         });
 
@@ -200,6 +212,18 @@ public class ReceiverTrackerFragment extends Fragment implements
         mMapView = (MapView) view.findViewById(R.id.mv_caller);
         mMapView.onCreate(savedInstanceState);
 
+        // Get the button view
+        View locationButton = ((View) mMapView.findViewById(Integer.valueOf("1")).getParent()).findViewById(Integer.valueOf("2"));
+//        // and next place it on bottom left
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+        layoutParams.setMargins(10, 0, 0, 92);
+        locationButton.setLayoutParams(layoutParams);
+
         mMapView.onResume(); // needed to get the map to display immediately
 
         try {
@@ -213,13 +237,15 @@ public class ReceiverTrackerFragment extends Fragment implements
             public void onMapReady(GoogleMap mMap) {
                 googleMap = mMap;
 
-                // For showing a move to my location button
-                if (ContextCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION)
-                        == PackageManager.PERMISSION_GRANTED) {
-                    googleMap.setMyLocationEnabled(true);
-                } else {
-                    // Show rationale and request permission.
+                // Check location permission
+                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                        ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(getActivity(),
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                            LOCATION_REQUEST_PERMISSION);
+                    return;
                 }
+                googleMap.setMyLocationEnabled(true);
 
                 // For dropping a marker at a point on the Map
                 LatLng callerLoc = new LatLng(callerLatitude, callerLongitude);
@@ -233,6 +259,26 @@ public class ReceiverTrackerFragment extends Fragment implements
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case LOCATION_REQUEST_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                } else {
+                    // permission denied
+                    ActivityCompat.requestPermissions(getActivity(),
+                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                            LOCATION_REQUEST_PERMISSION);
+                }
+                return;
+            }
+        }
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         // Connect the client.
@@ -241,11 +287,12 @@ public class ReceiverTrackerFragment extends Fragment implements
 
     @Override
     public void onStop() {
-        // Disconnecting the client invalidates it.
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-
         // only stop if it's connected, otherwise we crash
         if (mGoogleApiClient != null) {
+            if (mGoogleApiClient.isConnected())
+                // Disconnecting the client invalidates it.
+                LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
             mGoogleApiClient.disconnect();
         }
         super.onStop();
@@ -297,13 +344,9 @@ public class ReceiverTrackerFragment extends Fragment implements
         // Get last known recent location.
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST_PERMISSION);
             return;
         }
         Location mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
@@ -327,13 +370,9 @@ public class ReceiverTrackerFragment extends Fragment implements
         // Request location updates
         if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
                 ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST_PERMISSION);
             return;
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,

@@ -153,6 +153,9 @@ public class LoginActivity extends AppCompatActivity {
         mUserListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
+                // Success login here
+                showProgress(false);
+
                 if (snapshot.exists()) {
                     shared.setCurrentUser(snapshot.getValue(CelukUser.class));
                     AppUtils.routeCelukUser(LoginActivity.this, shared.getCurrentUser());
@@ -252,9 +255,6 @@ public class LoginActivity extends AppCompatActivity {
 
                             tvAuthStatus.setText(R.string.auth_failed);
                         }
-
-                        // Success login here
-                        showProgress(false);
                     }
                 });
         // [END sign_in_with_email]
