@@ -30,6 +30,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -75,9 +76,11 @@ public class ReceiverTrackerFragment extends Fragment implements
     private TextView tvCallerEmail;
     private FloatingActionButton fabCallCallerPhone;
     private MapView mMapView;
+
     private GoogleMap googleMap;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    private boolean isMapReady = false;
 
     private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
     private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
@@ -131,7 +134,12 @@ public class ReceiverTrackerFragment extends Fragment implements
                 qCaller.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        CelukUser celukCaller = dataSnapshot.getValue(CelukUser.class);
+                        if (dataSnapshot == null || dataSnapshot.getChildrenCount() != 1)
+                            return;
+
+                        final DatabaseReference callerRef = dataSnapshot.getChildren().iterator().next().getRef();
+                        CelukUser celukCaller = dataSnapshot.getChildren().iterator().next()
+                                .getValue(CelukUser.class);
                         if (celukCaller == null)
                             return;
 
@@ -246,14 +254,15 @@ public class ReceiverTrackerFragment extends Fragment implements
                     return;
                 }
                 googleMap.setMyLocationEnabled(true);
+                isMapReady = true;
 
-                // For dropping a marker at a point on the Map
-                LatLng callerLoc = new LatLng(callerLatitude, callerLongitude);
-                googleMap.addMarker(new MarkerOptions().position(callerLoc).title("Marker Title").snippet("Marker Description"));
-
-                // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(callerLoc).zoom(12).build();
-                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+//                // For dropping a marker at a point on the Map
+//                LatLng callerLoc = new LatLng(callerLatitude, callerLongitude);
+//                googleMap.addMarker(new MarkerOptions().position(callerLoc).title("Marker Title").snippet("Marker Description"));
+//
+//                // For zooming automatically to the location of the marker
+//                CameraPosition cameraPosition = new CameraPosition.Builder().target(callerLoc).zoom(12).build();
+//                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
             }
         });
     }
@@ -396,14 +405,19 @@ public class ReceiverTrackerFragment extends Fragment implements
     @Override
     public void onLocationChanged(Location location) {
         // New location has now been determined
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
+//        String msg = "Updated Location: " +
+//                Double.toString(location.getLatitude()) + "," +
+//                Double.toString(location.getLongitude());
+//        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
         // You can now create a LatLng Object for use with maps
-//        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if (mListener != null) {
             mListener.onChangeReceiverLocation(location.getLatitude(), location.getLongitude());
+        }
+
+        if (isMapReady) {
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 14);
+            googleMap.animateCamera(cameraUpdate);
         }
     }
 
