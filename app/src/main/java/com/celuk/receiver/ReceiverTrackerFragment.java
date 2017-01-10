@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,6 +26,8 @@ import com.celuk.database.model.CelukRequest;
 import com.celuk.database.model.CelukUser;
 import com.celuk.main.LoginActivity;
 import com.celuk.main.R;
+import com.celuk.webservice.api.GoogleDirectionService;
+import com.celuk.webservice.model.DirectionData;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -39,13 +42,23 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.PolyUtil;
 import com.utils.CelukSharedPref;
+
+import java.net.HttpURLConnection;
+import java.util.List;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.http.HTTP;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -56,6 +69,7 @@ import com.utils.CelukSharedPref;
  * create an instance of this fragment.
  */
 public class ReceiverTrackerFragment extends Fragment implements
+        OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
@@ -65,7 +79,7 @@ public class ReceiverTrackerFragment extends Fragment implements
     private int celukState;
     private String fragmentName;
     private String callerPhoneNumber;
-    private double callerLatitude, callerLongitude, receiverLatitude, receiverLongitude;
+    private double callerLatitude = 0, callerLongitude = 0;
 
     private CelukSharedPref shared;
     private DatabaseReference mCelukReference;
@@ -81,6 +95,7 @@ public class ReceiverTrackerFragment extends Fragment implements
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private boolean isMapReady = false;
+    private boolean hasDrawDirection = false;
 
     private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
     private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
@@ -151,7 +166,7 @@ public class ReceiverTrackerFragment extends Fragment implements
                             callerLongitude = 0;
                         else
                             callerLongitude = celukCaller.getLongitude();
-                        Log.e("RECEIVER LOC", "Lat : " + callerLatitude + ", " + "Long : " + callerLongitude);
+                        Log.e("CALLER LOC", "Lat : " + callerLatitude + ", " + "Long : " + callerLongitude);
 
                         callerPhoneNumber = celukCaller.getPhone();
                     }
@@ -240,31 +255,7 @@ public class ReceiverTrackerFragment extends Fragment implements
             e.printStackTrace();
         }
 
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap mMap) {
-                googleMap = mMap;
-
-                // Check location permission
-                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    ActivityCompat.requestPermissions(getActivity(),
-                            new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
-                            LOCATION_REQUEST_PERMISSION);
-                    return;
-                }
-                googleMap.setMyLocationEnabled(true);
-                isMapReady = true;
-
-//                // For dropping a marker at a point on the Map
-//                LatLng callerLoc = new LatLng(callerLatitude, callerLongitude);
-//                googleMap.addMarker(new MarkerOptions().position(callerLoc).title("Marker Title").snippet("Marker Description"));
-//
-//                // For zooming automatically to the location of the marker
-//                CameraPosition cameraPosition = new CameraPosition.Builder().target(callerLoc).zoom(12).build();
-//                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-            }
-        });
+        mMapView.getMapAsync(this);
     }
 
     @Override
@@ -402,23 +393,95 @@ public class ReceiverTrackerFragment extends Fragment implements
 
     }
 
+    boolean isFirstDisplay = true;
+
     @Override
     public void onLocationChanged(Location location) {
-        // New location has now been determined
-//        String msg = "Updated Location: " +
-//                Double.toString(location.getLatitude()) + "," +
-//                Double.toString(location.getLongitude());
-//        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
-        // You can now create a LatLng Object for use with maps
-        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
+        LatLng latLngReceiver = new LatLng(location.getLatitude(), location.getLongitude());
         if (mListener != null) {
             mListener.onChangeReceiverLocation(location.getLatitude(), location.getLongitude());
         }
 
         if (isMapReady) {
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 14);
-            googleMap.animateCamera(cameraUpdate);
+            if ((location.getAccuracy() < 30) && !hasDrawDirection && (callerLatitude != 0) && (callerLongitude != 0)) {
+                LatLng latLngCaller = new LatLng(callerLatitude, callerLongitude);
+                googleMap.addMarker(new MarkerOptions()
+                        .position(latLngCaller)
+                        .title(tvCallerEmail.getText().toString())
+                );
+
+                drawDirectionOnMap(getString(R.string.google_maps_key),
+                        location.getLatitude(), location.getLongitude(), callerLatitude, callerLongitude);
+            }
+
+            if (isFirstDisplay) {
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLngReceiver, 14);
+                googleMap.animateCamera(cameraUpdate);
+                isFirstDisplay = false;
+            }
         }
+    }
+
+    @Override
+    public void onMapReady(GoogleMap gMap) {
+        googleMap = gMap;
+
+        // Check location permission
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST_PERMISSION);
+            return;
+        }
+        googleMap.setMyLocationEnabled(true);
+        isMapReady = true;
+
+//                // For dropping a marker at a point on the Map
+//                LatLng callerLoc = new LatLng(callerLatitude, callerLongitude);
+//                googleMap.addMarker(new MarkerOptions().position(callerLoc).title("Marker Title").snippet("Marker Description"));
+//
+//                // For zooming automatically to the location of the marker
+//                CameraPosition cameraPosition = new CameraPosition.Builder().target(callerLoc).zoom(12).build();
+//                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    private void drawDirectionOnMap(String key,
+                                    double originLatitude, double originLongitude,
+                                    double destinationLatitude, double destinationLongitude) {
+        // Draw a direction here
+        Call<DirectionData> callDirection = new GoogleDirectionService().getDirectionDataGoogleAPI(key,
+                originLatitude, originLongitude, destinationLatitude, destinationLongitude);
+        callDirection.enqueue(new Callback<DirectionData>() {
+            @Override
+            public void onResponse(Call<DirectionData> call, Response<DirectionData> response) {
+                if (response.code() == HttpURLConnection.HTTP_OK) {
+                    if (response.body().getStatus().equalsIgnoreCase("OK")) {
+                        try {
+                            List<LatLng> listPoint = PolyUtil.decode(response.body().getRoutes().get(0).getOverviewPolyline().getPoints());
+                            // Setup polyline
+                            PolylineOptions lineOptions = new PolylineOptions();
+                            lineOptions.addAll(listPoint);
+                            lineOptions.width(10);
+                            lineOptions.color(ContextCompat.getColor(getContext(), R.color.c_green));
+
+                            googleMap.addPolyline(lineOptions);
+                            hasDrawDirection = true;
+                            return;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                Toast.makeText(getContext(), "Failed request direction to google API", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFailure(Call<DirectionData> call, Throwable t) {
+                t.printStackTrace();
+                Toast.makeText(getContext(), "Failed request direction to google API", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     /**

@@ -1,0 +1,377 @@
+{
+  "status": "OK",
+  "geocoded_waypoints": [
+    {
+      "geocoder_status": "OK",
+      "place_id": "ChIJExgtVBn0aS4RGu36rVGsmAw",
+      "types": [
+        "street_address"
+      ]
+    },
+    {
+      "geocoder_status": "OK",
+      "place_id": "ChIJKUoo--TzaS4R3sg9RlVhS6w",
+      "types": [
+        "route"
+      ]
+    }
+  ],
+  "routes": [
+    {
+      "bounds": {
+        "northeast": {
+          "lat": -6.19911,
+          "lng": 106.8327466
+        },
+        "southwest": {
+          "lat": -6.2299294,
+          "lng": 106.8185363
+        }
+      },
+      "copyrights": "Map data ©2017 Google",
+      "legs": [
+        {
+          "distance": {
+            "text": "6.0 km",
+            "value": 6001
+          },
+          "duration": {
+            "text": "16 mins",
+            "value": 963
+          },
+          "end_address": "Jl. Dr.Ide Anak Agung Gde Agung, Kuningan Tim., Kecamatan Setiabudi, Kota Jakarta Selatan, Daerah Khusus Ibukota Jakarta 12950, Indonesia",
+          "end_location": {
+            "lat": -6.2295472,
+            "lng": 106.8257384
+          },
+          "start_address": "Jl. Pati No.45, Menteng, Kota Jakarta Pusat, Daerah Khusus Ibukota Jakarta 10310, Indonesia",
+          "start_location": {
+            "lat": -6.2019514,
+            "lng": 106.823914
+          },
+          "steps": [
+            {
+              "distance": {
+                "text": "0.1 km",
+                "value": 141
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 32
+              },
+              "end_location": {
+                "lat": -6.2018976,
+                "lng": 106.8249352
+              },
+              "html_instructions": "Head <b>north</b> on <b>Jl. Pati</b> toward <b>Jl. Kudus</b>",
+              "polyline": {
+                "points": "dizd@m`_kSA?A?CAc@GIAAA?AAA?A@AHc@Lu@Jo@Hm@"
+              },
+              "start_location": {
+                "lat": -6.2019514,
+                "lng": 106.823914
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.2 km",
+                "value": 169
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 45
+              },
+              "end_location": {
+                "lat": -6.2005779,
+                "lng": 106.8255735
+              },
+              "html_instructions": "Turn <b>left</b> at the 2nd cross street onto <b>Jl. Kudus</b>",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "zhzd@{f_kS{@K{@Oo@KE?AACACACCGGcAcA"
+              },
+              "start_location": {
+                "lat": -6.2018976,
+                "lng": 106.8249352
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.2 km",
+                "value": 229
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 34
+              },
+              "end_location": {
+                "lat": -6.19911,
+                "lng": 106.8241272
+              },
+              "html_instructions": "Turn <b>left</b> onto <b>Jl. Purworejo</b>",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "r`zd@yj_kSoBlBk@d@iCjC"
+              },
+              "start_location": {
+                "lat": -6.2005779,
+                "lng": 106.8255735
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "90 m",
+                "value": 90
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 23
+              },
+              "end_location": {
+                "lat": -6.199673799999999,
+                "lng": 106.8235378
+              },
+              "html_instructions": "Turn <b>left</b> after Singapore Kwetiaw Kerang (on the left)",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "lwyd@ya_kS|@`Ap@r@"
+              },
+              "start_location": {
+                "lat": -6.19911,
+                "lng": 106.8241272
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "31 m",
+                "value": 31
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 12
+              },
+              "end_location": {
+                "lat": -6.1997254,
+                "lng": 106.8232634
+              },
+              "html_instructions": "Slight <b>right</b> toward <b>Jl. Jend. Sudirman</b>",
+              "maneuver": "turn-slight-right",
+              "polyline": {
+                "points": "|zyd@c~~jSF^BV"
+              },
+              "start_location": {
+                "lat": -6.199673799999999,
+                "lng": 106.8235378
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "1.6 km",
+                "value": 1565
+              },
+              "duration": {
+                "text": "2 mins",
+                "value": 146
+              },
+              "end_location": {
+                "lat": -6.2131574,
+                "lng": 106.8197059
+              },
+              "html_instructions": "Turn <b>left</b> onto <b>Jl. Jend. Sudirman</b><div style=\"font-size:0.9em\">Pass by Smart Hotel Jakarta (on the right)</div>",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "h{yd@k|~jSTAjA@v@@bABt@Fv@Dv@Jx@Lf@FRDb@FvAXTBPD@?NB@?H@LBxC^hCPD?zBLd@@ZBdG\\fAFr@Dl@Dt@Fp@JfARlBh@bBl@nAf@LD`Bp@bA`@bE~AbA`@bCpADBB@"
+              },
+              "start_location": {
+                "lat": -6.1997254,
+                "lng": 106.8232634
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.1 km",
+                "value": 136
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 24
+              },
+              "end_location": {
+                "lat": -6.2141364,
+                "lng": 106.8191239
+              },
+              "html_instructions": "Keep <b>left</b> to continue on <b>Jl. Jenderal Sudirman</b><div style=\"font-size:0.9em\">Pass by Mayapada Tower (on the left)</div>",
+              "maneuver": "keep-left",
+              "polyline": {
+                "points": "fo|d@ef~jSXMD@f@ZZTpAbALJ"
+              },
+              "start_location": {
+                "lat": -6.2131574,
+                "lng": 106.8197059
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "64 m",
+                "value": 64
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 14
+              },
+              "end_location": {
+                "lat": -6.214564699999999,
+                "lng": 106.8187348
+              },
+              "html_instructions": "Keep <b>left</b> to stay on <b>Jl. Jenderal Sudirman</b>",
+              "maneuver": "keep-left",
+              "polyline": {
+                "points": "ju|d@ob~jSh@^h@l@"
+              },
+              "start_location": {
+                "lat": -6.2141364,
+                "lng": 106.8191239
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "2.1 km",
+                "value": 2052
+              },
+              "duration": {
+                "text": "6 mins",
+                "value": 355
+              },
+              "end_location": {
+                "lat": -6.2255119,
+                "lng": 106.8311092
+              },
+              "html_instructions": "Slight <b>left</b> onto <b>Jl. Prof. DR. Satrio</b><div style=\"font-size:0.9em\">Pass by Kantor HSBC Indonesia Cabang World Trade Center (on the left)</div>",
+              "maneuver": "turn-slight-left",
+              "polyline": {
+                "points": "~w|d@a`~jSd@XFDHBD@F?@?J?LATC`@GNCLC\\Ed@If@Ix@WnA]bBe@x@W@ALEl@K^Kf@MNC|AYjASRENCdC{@NGrAo@TM\\OnAe@p@YBA^Qj@]`@YPOPSRUZa@l@}@LWFIXq@Pq@ZmAfAqEJg@@Iv@yDr@qClAeGl@cCDQF_@R{@P_An@aD^oBBKd@qC"
+              },
+              "start_location": {
+                "lat": -6.214564699999999,
+                "lng": 106.8187348
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.2 km",
+                "value": 180
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 50
+              },
+              "end_location": {
+                "lat": -6.2256764,
+                "lng": 106.8327297
+              },
+              "html_instructions": "Continue straight to stay on <b>Jl. Prof. DR. Satrio</b>",
+              "maneuver": "straight",
+              "polyline": {
+                "points": "l|~d@mm`kSJmAFq@HyBBiA"
+              },
+              "start_location": {
+                "lat": -6.2255119,
+                "lng": 106.8311092
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.6 km",
+                "value": 585
+              },
+              "duration": {
+                "text": "2 mins",
+                "value": 91
+              },
+              "end_location": {
+                "lat": -6.224843799999999,
+                "lng": 106.8279222
+              },
+              "html_instructions": "Make a <b>U-turn</b><div style=\"font-size:0.9em\">Pass by Ray White (on the left)</div>",
+              "maneuver": "uturn-right",
+              "polyline": {
+                "points": "n}~d@qw`kS|@CAx@?LAXAb@Cx@_@hC_AdFs@lD]dBUdASz@"
+              },
+              "start_location": {
+                "lat": -6.2256764,
+                "lng": 106.8327297
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.4 km",
+                "value": 384
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 65
+              },
+              "end_location": {
+                "lat": -6.2281881,
+                "lng": 106.8276207
+              },
+              "html_instructions": "Turn <b>left</b> onto <b>Jl. Mega Kuningan Tim.</b><div style=\"font-size:0.9em\">Pass by Danatama Makmur (on the left)</div>",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "fx~d@oy_kSbB^\\Fp@DtABn@?|@?X?`E[F?H?D@D?HBDBFFRR"
+              },
+              "start_location": {
+                "lat": -6.224843799999999,
+                "lng": 106.8279222
+              },
+              "travel_mode": "DRIVING"
+            },
+            {
+              "distance": {
+                "text": "0.4 km",
+                "value": 375
+              },
+              "duration": {
+                "text": "1 min",
+                "value": 72
+              },
+              "end_location": {
+                "lat": -6.2295472,
+                "lng": 106.8257384
+              },
+              "html_instructions": "Turn <b>left</b> after Plaza Mutiara (on the right)<div style=\"font-size:0.9em\">Pass by The Ritz - Carlton (on the right)</div><div style=\"font-size:0.9em\">Destination will be on the left</div>",
+              "maneuver": "turn-left",
+              "polyline": {
+                "points": "dm_e@sw_kSJEJEHEJCJAJCLAJ?\\?ZB\\HXJZLVRTTRV@BBB@DBB@BBD@B@B@D@B@B@B@B?B@D@BFp@Cp@Mp@Yj@_@`@"
+              },
+              "start_location": {
+                "lat": -6.2281881,
+                "lng": 106.8276207
+              },
+              "travel_mode": "DRIVING"
+            }
+          ],
+          "traffic_speed_entry": [],
+          "via_waypoint": []
+        }
+      ],
+      "overview_polyline": {
+        "points": "dizd@m`_kSk@IMGX}AT}AwB[{@OsAqA{CrCiCjC|@`Ap@r@F^BVTAbCBxBJnBP`BTdDj@d@HVDxC^hCP`CL`ADnLp@fBRfARlBh@rDtAnBv@fG`CbA`@bCpAHDXMD@bAp@~AnAh@^h@l@l@^XDXAv@K`BW`Ba@rDcAvBk@fAYlB]~AYtC_AvCuAdDsAlAw@b@c@n@w@z@uA`@{@l@_CrAyFx@cEr@qClAeGr@uC|A}Hb@{Bd@qCJmAPkDBiA|@CAfAC|@Cx@_@hCsBrKs@jDSz@bB^nALdCBvA?hE[^DLJRRJETKVEXEh@?x@Lt@Xl@h@TZJPPb@J~@Cp@Mp@Yj@_@`@"
+      },
+      "summary": "Jl. Jend. Sudirman and Jl. Prof. DR. Satrio",
+      "warnings": [],
+      "waypoint_order": []
+    }
+  ]
+}
