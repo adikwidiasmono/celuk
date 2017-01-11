@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,14 +30,11 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -47,6 +45,7 @@ import com.utils.CelukSharedPref;
 import com.utils.CelukState;
 
 public class CallerTrackerFragment extends Fragment implements
+        OnMapReadyCallback,
         GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
@@ -56,7 +55,7 @@ public class CallerTrackerFragment extends Fragment implements
     private int celukState;
     private String fragmentName;
     private String receiverPhoneNumber;
-    private double receiverLatitude, receiverLongitude, callerLatitude, callerLongitude;
+    private double receiverLatitude = 0, receiverLongitude = 0;
 
     private CelukSharedPref shared;
     private DatabaseReference mCelukReference;
@@ -65,12 +64,12 @@ public class CallerTrackerFragment extends Fragment implements
     private OnFragmentInteractionListener mListener;
 
     private TextView tvReceiverEmail, tvReceiverState;
-    private FloatingActionButton fabCallReceiverPhone;
 
     private MapView mMapView;
     private GoogleMap googleMap;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
+    private boolean isMapReady = false;
 
     private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
     private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
@@ -124,7 +123,12 @@ public class CallerTrackerFragment extends Fragment implements
                 qReceiver.addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(DataSnapshot dataSnapshot) {
-                        CelukUser celukReceiver = dataSnapshot.getValue(CelukUser.class);
+                        if (dataSnapshot == null || dataSnapshot.getChildrenCount() != 1)
+                            return;
+
+                        final DatabaseReference receiverRef = dataSnapshot.getChildren().iterator().next().getRef();
+                        CelukUser celukReceiver = dataSnapshot.getChildren().iterator().next()
+                                .getValue(CelukUser.class);
                         if (celukReceiver == null)
                             return;
 
@@ -139,6 +143,10 @@ public class CallerTrackerFragment extends Fragment implements
                         Log.e("RECEIVER LOC", "Lat : " + receiverLatitude + ", " + "Long : " + receiverLongitude);
 
                         receiverPhoneNumber = celukReceiver.getPhone();
+
+                        if (isMapReady) {
+                            // TODO : Track receiver posistion here
+                        }
                     }
 
                     @Override
@@ -172,12 +180,21 @@ public class CallerTrackerFragment extends Fragment implements
             tvReceiverState.setTextColor(ResourcesCompat.getColor(getResources(), R.color.c_green, null));
         }
 
-        fabCallReceiverPhone = (FloatingActionButton) view.findViewById(R.id.fab_call_receiver_phone);
+        FloatingActionButton fabCallReceiverPhone = (FloatingActionButton) view.findViewById(R.id.fab_call_receiver_phone);
         fabCallReceiverPhone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Uri number = Uri.parse("tel:" + receiverPhoneNumber);
                 startActivity(new Intent(Intent.ACTION_DIAL, number));
+            }
+        });
+
+        FloatingActionButton fabStopCeluk = (FloatingActionButton) view.findViewById(R.id.fab_stop_celuk);
+        fabStopCeluk.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO : Clear all state for both user and set request data as history
+
             }
         });
 
@@ -213,38 +230,47 @@ public class CallerTrackerFragment extends Fragment implements
         mMapView = (MapView) view.findViewById(R.id.mv_receiver);
         mMapView.onCreate(savedInstanceState);
 
-        mMapView.onResume(); // needed to get the map to display immediately
+        // Get the button view
+        View locationButton = ((View) mMapView.findViewById(Integer.valueOf("1")).getParent()).findViewById(Integer.valueOf("2"));
+        // and next place it on bottom left
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
+                RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_LEFT, RelativeLayout.TRUE);
+        layoutParams.addRule(RelativeLayout.ALIGN_PARENT_START, RelativeLayout.TRUE);
+        layoutParams.setMargins(10, 0, 0, 92);
+        locationButton.setLayoutParams(layoutParams);
+
+//        mMapView.onResume(); // needed to get the map to display immediately
 
         try {
-            MapsInitializer.initialize(getActivity().getApplicationContext());
+            MapsInitializer.initialize(getContext());
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        mMapView.getMapAsync(new OnMapReadyCallback() {
-            @Override
-            public void onMapReady(GoogleMap mMap) {
-                googleMap = mMap;
+        mMapView.getMapAsync(this);
+    }
 
-                // Check location permission
-                if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-                        ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case LOCATION_REQUEST_PERMISSION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted
+                } else {
+                    // permission denied
                     ActivityCompat.requestPermissions(getActivity(),
                             new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
                             LOCATION_REQUEST_PERMISSION);
-                    return;
                 }
-                mMap.setMyLocationEnabled(true);
-
-                // For dropping a marker at a point on the Map
-                LatLng receiverLoc = new LatLng(receiverLatitude, receiverLongitude);
-                googleMap.addMarker(new MarkerOptions().position(receiverLoc).title("Marker Title").snippet("Marker Description"));
-
-                // For zooming automatically to the location of the marker
-                CameraPosition cameraPosition = new CameraPosition.Builder().target(receiverLoc).zoom(12).build();
-                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+                return;
             }
-        });
+        }
     }
 
     @Override
@@ -256,11 +282,12 @@ public class CallerTrackerFragment extends Fragment implements
 
     @Override
     public void onStop() {
-        // Disconnecting the client invalidates it.
-        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-
         // only stop if it's connected, otherwise we crash
         if (mGoogleApiClient != null) {
+            if (mGoogleApiClient.isConnected())
+                // Disconnecting the client invalidates it.
+                LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
+
             mGoogleApiClient.disconnect();
         }
         super.onStop();
@@ -362,14 +389,32 @@ public class CallerTrackerFragment extends Fragment implements
     }
 
     @Override
+    public void onMapReady(GoogleMap gMap) {
+        googleMap = gMap;
+
+        // Check location permission
+        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(getActivity(),
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION},
+                    LOCATION_REQUEST_PERMISSION);
+            return;
+        }
+
+        googleMap.setMyLocationEnabled(true);
+        isMapReady = true;
+
+//        // For dropping a marker at a point on the Map
+//        LatLng receiverLoc = new LatLng(receiverLatitude, receiverLongitude);
+//        googleMap.addMarker(new MarkerOptions().position(receiverLoc).title("Marker Title").snippet("Marker Description"));
+//
+//        // For zooming automatically to the location of the marker
+//        CameraPosition cameraPosition = new CameraPosition.Builder().target(receiverLoc).zoom(12).build();
+//        googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    @Override
     public void onLocationChanged(Location location) {
-        // New location has now been determined
-        String msg = "Updated Location: " +
-                Double.toString(location.getLatitude()) + "," +
-                Double.toString(location.getLongitude());
-        Toast.makeText(getContext(), msg, Toast.LENGTH_SHORT).show();
-        // You can now create a LatLng Object for use with maps
-//        LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         if (mListener != null) {
             mListener.onChangeCallerLocation(location.getLatitude(), location.getLongitude());
         }

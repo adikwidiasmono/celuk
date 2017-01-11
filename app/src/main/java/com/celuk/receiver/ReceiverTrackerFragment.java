@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -39,7 +38,6 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -58,7 +56,6 @@ import java.util.List;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.http.HTTP;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -75,28 +72,23 @@ public class ReceiverTrackerFragment extends Fragment implements
         LocationListener {
     private final static String TAG = ReceiverTrackerFragment.class.getCanonicalName();
     private final static int LOCATION_REQUEST_PERMISSION = 99;
-
+    boolean isFirstDisplay = true;
+    MarkerOptions callerMarker = null;
     private int celukState;
     private String fragmentName;
     private String callerPhoneNumber;
     private double callerLatitude = 0, callerLongitude = 0;
-
     private CelukSharedPref shared;
     private DatabaseReference mCelukReference;
     private DatabaseReference celukRequestReference;
-
     private OnFragmentInteractionListener mListener;
-
     private TextView tvCallerEmail;
-    private FloatingActionButton fabCallCallerPhone;
     private MapView mMapView;
-
     private GoogleMap googleMap;
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private boolean isMapReady = false;
     private boolean hasDrawDirection = false;
-
     private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
     private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
 
@@ -166,7 +158,7 @@ public class ReceiverTrackerFragment extends Fragment implements
                             callerLongitude = 0;
                         else
                             callerLongitude = celukCaller.getLongitude();
-                        Log.e("CALLER LOC", "Lat : " + callerLatitude + ", " + "Long : " + callerLongitude);
+//                        Log.e("CALLER LOC", "Lat : " + callerLatitude + ", " + "Long : " + callerLongitude);
 
                         callerPhoneNumber = celukCaller.getPhone();
                     }
@@ -194,12 +186,24 @@ public class ReceiverTrackerFragment extends Fragment implements
         View view = inflater.inflate(R.layout.fragment_receiver_tracker, container, false);
 
         tvCallerEmail = (TextView) view.findViewById(R.id.tv_caller_email);
-        fabCallCallerPhone = (FloatingActionButton) view.findViewById(R.id.fab_call_caller_phone);
+        FloatingActionButton fabCallCallerPhone = (FloatingActionButton) view.findViewById(R.id.fab_call_caller_phone);
         fabCallCallerPhone.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Uri number = Uri.parse("tel:" + callerPhoneNumber);
                 startActivity(new Intent(Intent.ACTION_DIAL, number));
+            }
+        });
+
+        FloatingActionButton fabNavigateReceiver = (FloatingActionButton) view.findViewById(R.id.fab_navigate_receiver);
+        fabNavigateReceiver.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (callerLatitude != 0 && callerLongitude != 0) {
+                    Intent intent = new Intent(android.content.Intent.ACTION_VIEW,
+                            Uri.parse("http://maps.google.com/maps?daddr=" + callerLatitude + "," + callerLongitude));
+                    startActivity(intent);
+                }
             }
         });
 
@@ -237,7 +241,7 @@ public class ReceiverTrackerFragment extends Fragment implements
 
         // Get the button view
         View locationButton = ((View) mMapView.findViewById(Integer.valueOf("1")).getParent()).findViewById(Integer.valueOf("2"));
-//        // and next place it on bottom left
+        // and next place it on bottom left
         RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(
                 RelativeLayout.LayoutParams.WRAP_CONTENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
 
@@ -247,10 +251,10 @@ public class ReceiverTrackerFragment extends Fragment implements
         layoutParams.setMargins(10, 0, 0, 92);
         locationButton.setLayoutParams(layoutParams);
 
-        mMapView.onResume(); // needed to get the map to display immediately
+//        mMapView.onResume(); // needed to get the map to display immediately
 
         try {
-            MapsInitializer.initialize(getActivity().getApplicationContext());
+            MapsInitializer.initialize(getContext());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -393,35 +397,6 @@ public class ReceiverTrackerFragment extends Fragment implements
 
     }
 
-    boolean isFirstDisplay = true;
-
-    @Override
-    public void onLocationChanged(Location location) {
-        LatLng latLngReceiver = new LatLng(location.getLatitude(), location.getLongitude());
-        if (mListener != null) {
-            mListener.onChangeReceiverLocation(location.getLatitude(), location.getLongitude());
-        }
-
-        if (isMapReady) {
-            if ((location.getAccuracy() < 30) && !hasDrawDirection && (callerLatitude != 0) && (callerLongitude != 0)) {
-                LatLng latLngCaller = new LatLng(callerLatitude, callerLongitude);
-                googleMap.addMarker(new MarkerOptions()
-                        .position(latLngCaller)
-                        .title(tvCallerEmail.getText().toString())
-                );
-
-                drawDirectionOnMap(getString(R.string.google_maps_key),
-                        location.getLatitude(), location.getLongitude(), callerLatitude, callerLongitude);
-            }
-
-            if (isFirstDisplay) {
-                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLngReceiver, 14);
-                googleMap.animateCamera(cameraUpdate);
-                isFirstDisplay = false;
-            }
-        }
-    }
-
     @Override
     public void onMapReady(GoogleMap gMap) {
         googleMap = gMap;
@@ -444,6 +419,35 @@ public class ReceiverTrackerFragment extends Fragment implements
 //                // For zooming automatically to the location of the marker
 //                CameraPosition cameraPosition = new CameraPosition.Builder().target(callerLoc).zoom(12).build();
 //                googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        LatLng latLngReceiver = new LatLng(location.getLatitude(), location.getLongitude());
+        if (mListener != null) {
+            mListener.onChangeReceiverLocation(location.getLatitude(), location.getLongitude());
+        }
+
+        if (isMapReady) {
+            if ((callerMarker != null) && (callerLatitude != 0) && (callerLongitude != 0)) {
+                LatLng latLngCaller = new LatLng(callerLatitude, callerLongitude);
+                googleMap.addMarker(new MarkerOptions()
+                        .position(latLngCaller)
+                        .title(tvCallerEmail.getText().toString())
+                );
+            }
+
+            if ((location.getAccuracy() < 30) && !hasDrawDirection && (callerLatitude != 0) && (callerLongitude != 0)) {
+                drawDirectionOnMap(getString(R.string.google_maps_key),
+                        location.getLatitude(), location.getLongitude(), callerLatitude, callerLongitude);
+            }
+
+            if (isFirstDisplay) {
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLngReceiver, 14);
+                googleMap.animateCamera(cameraUpdate);
+                isFirstDisplay = false;
+            }
+        }
     }
 
     private void drawDirectionOnMap(String key,

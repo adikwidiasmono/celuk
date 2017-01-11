@@ -5,61 +5,75 @@
     android:id="@+id/content_caller"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:paddingBottom="@dimen/vertical_margin"
-    android:paddingLeft="@dimen/horizontal_margin"
-    android:paddingRight="@dimen/horizontal_margin"
-    android:paddingTop="@dimen/vertical_margin"
     tools:context="com.celuk.caller.CallerReadyFragment">
-
-    <TextView
-        android:id="@+id/tv_receiver_label"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:text="@string/receiver"
-        android:textColor="@color/c_green" />
-
-    <TextView
-        android:id="@+id/tv_receiver_email"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_receiver_label"
-        android:layout_alignLeft="@+id/tv_receiver_label"
-        android:layout_alignStart="@+id/tv_receiver_label"
-        android:text="celuk.user@mail.com"
-        android:textColor="@color/c_green"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tv_receiver_called_status"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/tv_receiver_email"
-        android:layout_alignLeft="@+id/tv_receiver_label"
-        android:layout_alignStart="@+id/tv_receiver_label"
-        android:text="[Has't RESPONSE]"
-        android:textColor="@color/c_red"
-        android:textStyle="bold" />
-
-    <TextView
-        android:id="@+id/tv_sign_out"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBaseline="@+id/tv_receiver_label"
-        android:layout_alignParentEnd="true"
-        android:layout_alignParentRight="true"
-        android:text="@string/sign_out"
-        android:textColor="@color/c_black"
-        android:textStyle="bold" />
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/mv_receiver"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/tv_receiver_called_status"
-        android:layout_marginTop="@dimen/vertical_margin" />
+        android:layout_height="match_parent" />
+
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="@color/c_black"
+        app:cardCornerRadius="3dp"
+        app:cardElevation="4dp"
+        app:cardUseCompatPadding="true">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="@dimen/vertical_margin"
+            android:paddingLeft="@dimen/horizontal_margin"
+            android:paddingRight="@dimen/horizontal_margin"
+            android:paddingTop="@dimen/vertical_margin">
+
+            <TextView
+                android:id="@+id/tv_receiver_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentLeft="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:text="@string/receiver"
+                android:textColor="@color/c_green" />
+
+            <TextView
+                android:id="@+id/tv_receiver_email"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/tv_receiver_label"
+                android:layout_alignStart="@+id/tv_receiver_label"
+                android:layout_below="@+id/tv_receiver_label"
+                android:text="celuk.user@mail.com"
+                android:textColor="@color/c_green"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_receiver_called_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignLeft="@+id/tv_receiver_label"
+                android:layout_alignStart="@+id/tv_receiver_label"
+                android:layout_below="@+id/tv_receiver_email"
+                android:text="[Has't RESPONSE]"
+                android:textColor="@color/c_red"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_sign_out"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBaseline="@+id/tv_receiver_label"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:text="@string/sign_out"
+                android:textColor="@color/c_black"
+                android:textStyle="bold" />
+        </RelativeLayout>
+    </android.support.v7.widget.CardView>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/fab_call_receiver_phone"
@@ -69,6 +83,17 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_margin="@dimen/fab_margin"
-        app:srcCompat="@android:drawable/ic_menu_call" />
+        app:srcCompat="@drawable/ic_phone_white_36dp" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/fab_stop_celuk"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/fab_call_receiver_phone"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="@dimen/fab_margin"
+        app:fabSize="mini"
+        app:srcCompat="@drawable/ic_clear_white_36dp" />
 
 </RelativeLayout>
