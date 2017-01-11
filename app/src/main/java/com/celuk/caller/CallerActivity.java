@@ -11,10 +11,10 @@ import com.celuk.database.model.CelukUser;
 import com.celuk.main.MainActivity;
 import com.celuk.main.R;
 import com.celuk.parent.BaseActivity;
-import com.celuk.receiver.ReceiverActivity;
 import com.utils.CelukState;
 
 public class CallerActivity extends BaseActivity implements
+        CallerRequestFragment.OnFragmentInteractionListener,
         CallerReadyFragment.OnFragmentInteractionListener,
         CallerTrackerFragment.OnFragmentInteractionListener {
 
@@ -128,38 +128,37 @@ public class CallerActivity extends BaseActivity implements
         return activeFragment;
     }
 
-    private void updateCallerState(int state) {
+    private void updateCallerState(int state, String requestId) {
         CelukUser user = shared.getCurrentUser();
         user.setPairedState(state);
+        user.setRequestId(requestId);
         shared.setCurrentUser(user);
 
         mDatabase.child("users")
                 .child(getUserUid())
-                .child("pairedState")
-                .setValue(state);
+                .setValue(user);
 
         updateActiveFragment(getActiveFragment());
     }
 
     @Override
-    public void onCallerCallReceiver(int celukState) {
-        updateCallerState(celukState);
+    public void onRequestAccepted(int nextState, String requestId) {
+        updateCallerState(nextState, requestId);
+    }
+
+    @Override
+    public void onCallerCallReceiver(int celukState, String requestId) {
+        updateCallerState(celukState, requestId);
     }
 
     @Override
     public void onReceiverStop(int celukState) {
-        updateCallerState(celukState);
+        updateCallerState(celukState, null);
     }
 
     @Override
     public void onEndCELUKPairing(int celukState) {
-        // Remove request id
-        mDatabase.child("users")
-                .child(getUserUid())
-                .child("requestId")
-                .setValue(null);
-
-        updateCallerState(celukState);
+        updateCallerState(celukState, null);
     }
 
     @Override

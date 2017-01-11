@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.AlertDialog;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -116,7 +115,7 @@ public class ReceiverReadyFragment extends Fragment {
                             callerRef.setValue(celukCaller);
 
                             // Update receiver to duty free
-                            mListener.onStopAsReceiver(CelukState.CELUK_NO_ASSIGNMENT, null);
+                            mListener.onStopAsReceiver(CelukState.CELUK_NO_ASSIGNMENT);
                             return;
                         }
 
@@ -130,7 +129,7 @@ public class ReceiverReadyFragment extends Fragment {
                                                 celukCaller.setPairedState(CelukState.CALLER_WAIT_RECEIVER);
                                                 callerRef.setValue(celukCaller);
 
-                                                mListener.onCallerAcceptCall(CelukState.RECEIVER_ACCEPT_CALL, shared.getCurrentUser().getRequestId());
+                                                mListener.onReceiverAcceptCall(CelukState.RECEIVER_ACCEPT_CALL, shared.getCurrentUser().getRequestId());
                                             }
                                         }
                                     })
@@ -214,8 +213,8 @@ public class ReceiverReadyFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onCallerAcceptCall(int nextState, String requestId);
+        void onReceiverAcceptCall(int nextState, String requestId);
 
-        void onStopAsReceiver(int nextState, String requestId);
+        void onStopAsReceiver(int nextState);
     }
 }

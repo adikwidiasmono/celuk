@@ -1,7 +1,6 @@
 package com.celuk.receiver;
 
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -148,13 +147,13 @@ public class ReceiverActivity extends BaseActivity implements
     }
 
     @Override
-    public void onCallerAcceptCall(int nextState, String requestId) {
+    public void onReceiverAcceptCall(int nextState, String requestId) {
         updateReceiverState(nextState, requestId);
     }
 
     @Override
-    public void onStopAsReceiver(int nextState, String requestId) {
-        updateReceiverState(nextState, requestId);
+    public void onStopAsReceiver(int nextState) {
+        updateReceiverState(nextState, null);
     }
 
     @Override

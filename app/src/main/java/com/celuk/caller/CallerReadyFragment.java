@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -152,7 +151,7 @@ public class CallerReadyFragment extends Fragment {
                     shared.setCurrentUser(celukUser);
 
                     Toast.makeText(getContext(), "Calling " + receiverEmail + " ...", Toast.LENGTH_SHORT).show();
-                    mListener.onCallerCallReceiver(CelukState.CALLER_CALL_RECEIVER);
+                    mListener.onCallerCallReceiver(CelukState.CALLER_CALL_RECEIVER, shared.getCurrentUser().getRequestId());
                 }
             }
         });
@@ -188,7 +187,8 @@ public class CallerReadyFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        void onCallerCallReceiver(int nextState);
+        void onCallerCallReceiver(int nextState, String requestId);
+
         void onReceiverStop(int nextState);
     }
 }

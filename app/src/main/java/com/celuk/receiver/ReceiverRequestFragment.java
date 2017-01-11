@@ -5,22 +5,17 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.celuk.database.model.CelukRequest;
-import com.celuk.database.model.CelukUser;
 import com.celuk.database.viewholder.CelukReceiverRequestViewHolder;
 import com.celuk.main.R;
 import com.firebase.ui.database.FirebaseRecyclerAdapter;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 import com.utils.AppDateUtils;
 import com.utils.CelukSharedPref;
 import com.utils.CelukState;
@@ -130,44 +125,15 @@ public class ReceiverRequestFragment extends Fragment {
                 viewHolder.ivReqAccept.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        // Update caller state
-                        Query qCelukCaller = mCelukReference
-                                .child("users")
-                                .orderByChild("email").equalTo(model.getCaller());
-                        qCelukCaller.addListenerForSingleValueEvent(new ValueEventListener() {
-                            @Override
-                            public void onDataChange(DataSnapshot dataSnapshot) {
-                                if (dataSnapshot != null && dataSnapshot.getChildrenCount() == 1) {
-                                    // Update Celuk Request Data
-                                    model.setResponseDate(AppDateUtils.getCurrentDate(AppDateUtils.APP_DATE_PATTERN));
-                                    model.setStatus(CelukRequest.REQUEST_STATUS_ACCEPT);
-                                    postRef.setValue(model);
+                        // Update Celuk Request Data
+                        model.setResponseDate(AppDateUtils.getCurrentDate(AppDateUtils.APP_DATE_PATTERN));
+                        model.setStatus(CelukRequest.REQUEST_STATUS_ACCEPT);
+                        postRef.setValue(model);
 
-                                    // Update Celuk Caller Data
-                                    CelukUser celukCaller = dataSnapshot.getChildren().iterator().next()
-                                            .getValue(CelukUser.class);
-                                    celukCaller.setRequestId(postKey);
-                                    celukCaller.setPairedState(CelukState.CALLER_READY);
-                                    dataSnapshot.getChildren().iterator().next()
-                                            .getRef().setValue(celukCaller);
-
-//                                    dataSnapshot.getChildren().iterator().next().getRef()
-//                                            .child("requestId").setValue(postKey);
-//                                    dataSnapshot.getChildren().iterator().next().getRef()
-//                                            .child("pairedState").setValue(CelukState.CALLER_READY);
-
-                                    // Update Celuk Receiver Data
-                                    if (mListener != null) {
-                                        mListener.onReceiverAcceptRequest(CelukState.RECEIVER_READY, postKey);
-                                    }
-                                }
-                            }
-
-                            @Override
-                            public void onCancelled(DatabaseError databaseError) {
-
-                            }
-                        });
+                        // Update Celuk Receiver Data
+                        if (mListener != null) {
+                            mListener.onReceiverAcceptRequest(CelukState.RECEIVER_READY, postKey);
+                        }
                     }
                 });
                 viewHolder.ivReqReject.setOnClickListener(new View.OnClickListener() {

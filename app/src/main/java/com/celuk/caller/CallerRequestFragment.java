@@ -1,5 +1,6 @@
 package com.celuk.caller;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
@@ -28,6 +29,7 @@ import com.google.firebase.database.ValueEventListener;
 import com.utils.AppDateUtils;
 import com.utils.AppUtils;
 import com.utils.CelukSharedPref;
+import com.utils.CelukState;
 
 public class CallerRequestFragment extends Fragment {
     private final static String TAG = CallerRequestFragment.class.getCanonicalName();
@@ -47,6 +49,8 @@ public class CallerRequestFragment extends Fragment {
     private Query qCelukUser;
     private ValueEventListener qCelukUserListener;
     private ValueEventListener qCallerRequestListener;
+
+    private OnFragmentInteractionListener mListener;
 
     public CallerRequestFragment() {
         // Required empty public constructor
@@ -84,7 +88,36 @@ public class CallerRequestFragment extends Fragment {
         tilReceiverEmail = (TextInputLayout) view.findViewById(R.id.til_receiver_email);
         etReceiverEmail = (TextInputEditText) view.findViewById(R.id.et_receiver_email);
 
+        // Set up FirebaseRecyclerAdapter with the Query
+        qCallerRequest = mCelukReference.child("requests")
+                .orderByChild("caller")
+                .equalTo(shared.getCurrentUser().getEmail());
+
         initRecyclerView(view);
+
+        // Add listener to change fragment to ready fragment if receiver accept the request
+        qCallerRequest.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot != null && dataSnapshot.getChildrenCount() > 0) {
+                    for (DataSnapshot snapChild : dataSnapshot.getChildren()) {
+                        CelukRequest req = snapChild.getValue(CelukRequest.class);
+                        if (req == null)
+                            return;
+
+                        if (req.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT)) {
+                            if (mListener != null)
+                                mListener.onRequestAccepted(CelukState.CALLER_READY, snapChild.getKey());
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
 
         Button btRequestReceiver = (Button) view.findViewById(R.id.bt_req_receiver);
         btRequestReceiver.setOnClickListener(new View.OnClickListener() {
@@ -113,10 +146,6 @@ public class CallerRequestFragment extends Fragment {
         mManager.setStackFromEnd(true);
         mRecycler.setLayoutManager(mManager);
 
-        // Set up FirebaseRecyclerAdapter with the Query
-        qCallerRequest = mCelukReference.child("requests")
-                .orderByChild("caller")
-                .equalTo(shared.getCurrentUser().getEmail());
         createAdapter(qCallerRequest);
 
         mRecycler.setAdapter(mAdapter);
@@ -238,13 +267,14 @@ public class CallerRequestFragment extends Fragment {
                             }
                         }
 
+                        qCallerRequest.removeEventListener(qCallerRequestListener);
+
                         if (invalidReq) {
                             Toast.makeText(getContext(), "Cannot send request to same user", Toast.LENGTH_SHORT).show();
                             return;
                         }
                     }
 
-                    qCallerRequest.removeEventListener(qCallerRequestListener);
                     // Saving new Celuk Request
                     saveCelukRequest(callerEmail, receiverEmail);
                 }
@@ -267,6 +297,28 @@ public class CallerRequestFragment extends Fragment {
         mCelukReference.child("requests").push().setValue(celukRequest);
 
         Toast.makeText(getContext(), "Request has been sent to " + receiverEmail, Toast.LENGTH_SHORT).show();
+    }
+
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnFragmentInteractionListener) {
+            mListener = (OnFragmentInteractionListener) context;
+        } else {
+            throw new RuntimeException(context.toString()
+                    + " must implement OnFragmentInteractionListener");
+        }
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        mListener = null;
+    }
+
+    public interface OnFragmentInteractionListener {
+        void onRequestAccepted(int nextState, String requestId);
     }
 
 }
