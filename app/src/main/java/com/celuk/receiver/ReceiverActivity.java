@@ -1,12 +1,15 @@
 package com.celuk.receiver;
 
+import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 
 import com.celuk.database.model.CelukUser;
+import com.celuk.main.MainActivity;
 import com.celuk.main.R;
 import com.celuk.parent.BaseActivity;
 import com.utils.CelukState;
@@ -26,11 +29,25 @@ public class ReceiverActivity extends BaseActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(!isReady);
 
         isReady = getIntent().getBooleanExtra("READY", false);
 
         setupFragment(savedInstanceState);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent intent = getIntent();
+                intent.setClass(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                finish();
+                return (true);
+        }
+
+        return (super.onOptionsItemSelected(item));
     }
 
     @Override
@@ -43,10 +60,14 @@ public class ReceiverActivity extends BaseActivity implements
 
     @Override
     public void onBackPressed() {
-        if (isReady)
+        if (isReady) {
             moveTaskToBack(true);
-        else
-            super.onBackPressed();
+        } else {
+            Intent intent = getIntent();
+            intent.setClass(getApplicationContext(), MainActivity.class);
+            startActivity(intent);
+            finish();
+        }
     }
 
     private void setupFragment(Bundle savedInstanceState) {
@@ -134,6 +155,11 @@ public class ReceiverActivity extends BaseActivity implements
     @Override
     public void onStopAsReceiver(int nextState, String requestId) {
         updateReceiverState(nextState, requestId);
+    }
+
+    @Override
+    public void onEndCELUKPairing(int celukState) {
+        updateReceiverState(celukState, null);
     }
 
     @Override

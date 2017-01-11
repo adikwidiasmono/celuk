@@ -189,7 +189,6 @@ public class CallerReadyFragment extends Fragment {
      */
     public interface OnFragmentInteractionListener {
         void onCallerCallReceiver(int nextState);
-
         void onReceiverStop(int nextState);
     }
 }

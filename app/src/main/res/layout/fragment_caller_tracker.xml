@@ -47,7 +47,7 @@
                 android:layout_alignLeft="@+id/tv_receiver_label"
                 android:layout_alignStart="@+id/tv_receiver_label"
                 android:layout_below="@+id/tv_receiver_label"
-                android:text="celuk.user@mail.com"
+                android:text="Processing..."
                 android:textColor="@color/c_green"
                 android:textStyle="bold" />
 
@@ -58,8 +58,8 @@
                 android:layout_alignLeft="@+id/tv_receiver_label"
                 android:layout_alignStart="@+id/tv_receiver_label"
                 android:layout_below="@+id/tv_receiver_email"
-                android:text="[Has't RESPONSE]"
-                android:textColor="@color/c_red"
+                android:text="..."
+                android:textColor="@color/c_green"
                 android:textStyle="bold" />
 
             <TextView
@@ -83,6 +83,7 @@
         android:layout_alignParentEnd="true"
         android:layout_alignParentRight="true"
         android:layout_margin="@dimen/fab_margin"
+        app:fabSize="mini"
         app:srcCompat="@drawable/ic_phone_white_36dp" />
 
     <android.support.design.widget.FloatingActionButton

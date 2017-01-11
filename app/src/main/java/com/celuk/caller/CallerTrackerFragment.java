@@ -2,21 +2,28 @@ package com.celuk.caller;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Point;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.res.ResourcesCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,11 +37,17 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.Projection;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -70,9 +83,12 @@ public class CallerTrackerFragment extends Fragment implements
     private GoogleApiClient mGoogleApiClient;
     private LocationRequest mLocationRequest;
     private boolean isMapReady = false;
+    private Marker receiverMarker = null;
 
     private long UPDATE_INTERVAL = 30 * 1000;  /* 30 secs */
     private long FASTEST_INTERVAL = 10 * 1000; /* 10 sec */
+
+    private CelukUser celukReceiver;
 
     public CallerTrackerFragment() {
         // Required empty public constructor
@@ -126,11 +142,22 @@ public class CallerTrackerFragment extends Fragment implements
                         if (dataSnapshot == null || dataSnapshot.getChildrenCount() != 1)
                             return;
 
-                        final DatabaseReference receiverRef = dataSnapshot.getChildren().iterator().next().getRef();
-                        CelukUser celukReceiver = dataSnapshot.getChildren().iterator().next()
+                        DatabaseReference receiverReference = dataSnapshot.getChildren().iterator().next().getRef();
+                        celukReceiver = dataSnapshot.getChildren().iterator().next()
                                 .getValue(CelukUser.class);
                         if (celukReceiver == null)
                             return;
+
+                        if (tvReceiverState != null) {
+                            if (celukState == CelukState.CALLER_CALL_RECEIVER) {
+                                tvReceiverState.setText("[Has't RESPONSE]");
+                                tvReceiverState.setTextColor(ResourcesCompat.getColor(getResources(), R.color.c_red, null));
+                            }
+                            if (celukState == CelukState.CALLER_WAIT_RECEIVER) {
+                                tvReceiverState.setText("[COMING to you]");
+                                tvReceiverState.setTextColor(ResourcesCompat.getColor(getResources(), R.color.c_green, null));
+                            }
+                        }
 
                         if (celukReceiver.getLatitude() == null)
                             receiverLatitude = 0;
@@ -145,7 +172,22 @@ public class CallerTrackerFragment extends Fragment implements
                         receiverPhoneNumber = celukReceiver.getPhone();
 
                         if (isMapReady) {
-                            // TODO : Track receiver posistion here
+                            LatLng latLngReceiver = new LatLng(receiverLatitude, receiverLongitude);
+
+                            if (receiverMarker == null) {
+                                MarkerOptions receiverMarkerOpt = new MarkerOptions()
+                                        .position(latLngReceiver)
+                                        .title(celukReceiver.getEmail())
+                                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_ball_pink_16dp));
+                                receiverMarker = googleMap.addMarker(receiverMarkerOpt);
+
+                                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLngReceiver, 14);
+                                googleMap.animateCamera(cameraUpdate);
+                            } else {
+                                moveAndAnimateMarker(receiverMarker, latLngReceiver, false);
+                                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(latLngReceiver);
+                                googleMap.animateCamera(cameraUpdate);
+                            }
                         }
                     }
 
@@ -173,12 +215,6 @@ public class CallerTrackerFragment extends Fragment implements
 
         tvReceiverEmail = (TextView) view.findViewById(R.id.tv_receiver_email);
         tvReceiverState = (TextView) view.findViewById(R.id.tv_receiver_called_status);
-        if (celukState == CelukState.CALLER_CALL_RECEIVER)
-            tvReceiverState.setText("[Has't RESPONSE]");
-        if (celukState == CelukState.CALLER_WAIT_RECEIVER) {
-            tvReceiverState.setText("[COMING to you]");
-            tvReceiverState.setTextColor(ResourcesCompat.getColor(getResources(), R.color.c_green, null));
-        }
 
         FloatingActionButton fabCallReceiverPhone = (FloatingActionButton) view.findViewById(R.id.fab_call_receiver_phone);
         fabCallReceiverPhone.setOnClickListener(new View.OnClickListener() {
@@ -193,8 +229,29 @@ public class CallerTrackerFragment extends Fragment implements
         fabStopCeluk.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                // TODO : Clear all state for both user and set request data as history
+                // Clear all state for both user and set request data as history
+                if (celukReceiver != null) {
+                    new AlertDialog.Builder(getContext())
+                            .setTitle("End CELUK Pairing")
+                            .setMessage("Are you sure want to end pairing with " + celukReceiver.getEmail())
+                            .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    if (mListener != null) {
+                                        mListener.onEndCELUKPairing(CelukState.CELUK_NO_ASSIGNMENT);
 
+                                        // Update active request data to history
+                                        celukRequestReference.child("status").setValue(CelukRequest.REQUEST_STATUS_HISTORY);
+                                    }
+                                }
+                            })
+                            .setNegativeButton(android.R.string.no, new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            })
+                            .setIcon(android.R.drawable.ic_dialog_alert)
+                            .show();
+                }
             }
         });
 
@@ -420,6 +477,43 @@ public class CallerTrackerFragment extends Fragment implements
         }
     }
 
+    public void moveAndAnimateMarker(final Marker marker, final LatLng toPosition,
+                                     final boolean hideMarker) {
+        final Handler handler = new Handler();
+        final long start = SystemClock.uptimeMillis();
+        Projection proj = googleMap.getProjection();
+        Point startPoint = proj.toScreenLocation(marker.getPosition());
+        final LatLng startLatLng = proj.fromScreenLocation(startPoint);
+        final long duration = 500;
+
+        final Interpolator interpolator = new LinearInterpolator();
+
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                long elapsed = SystemClock.uptimeMillis() - start;
+                float t = interpolator.getInterpolation((float) elapsed
+                        / duration);
+                double lng = t * toPosition.longitude + (1 - t)
+                        * startLatLng.longitude;
+                double lat = t * toPosition.latitude + (1 - t)
+                        * startLatLng.latitude;
+                marker.setPosition(new LatLng(lat, lng));
+
+                if (t < 1.0) {
+                    // Post again 16ms later.
+                    handler.postDelayed(this, 16);
+                } else {
+                    if (hideMarker) {
+                        marker.setVisible(false);
+                    } else {
+                        marker.setVisible(true);
+                    }
+                }
+            }
+        });
+    }
+
     /**
      * This interface must be implemented by activities that contain this
      * fragment to allow an interaction in this fragment to be communicated
@@ -432,5 +526,7 @@ public class CallerTrackerFragment extends Fragment implements
      */
     public interface OnFragmentInteractionListener {
         void onChangeCallerLocation(double latitude, double longitude);
+
+        void onEndCELUKPairing(int celukState);
     }
 }

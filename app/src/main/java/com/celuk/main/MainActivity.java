@@ -48,6 +48,7 @@ public class MainActivity extends BaseActivity {
                 intent.setClass(getApplicationContext(), CallerActivity.class);
                 intent.putExtra("READY", false);
                 startActivity(intent);
+                finish();
             }
         });
 
@@ -58,6 +59,7 @@ public class MainActivity extends BaseActivity {
                 intent.setClass(getApplicationContext(), ReceiverActivity.class);
                 intent.putExtra("READY", false);
                 startActivity(intent);
+                finish();
             }
         });
     }

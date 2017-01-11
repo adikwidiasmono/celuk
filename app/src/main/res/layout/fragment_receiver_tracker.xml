@@ -45,7 +45,7 @@
                 android:layout_alignLeft="@+id/tv_caller_label"
                 android:layout_alignStart="@+id/tv_caller_label"
                 android:layout_below="@+id/tv_caller_label"
-                android:text="celuk.user@mail.com"
+                android:text="Processing..."
                 android:textColor="@color/c_green"
                 android:textStyle="bold" />
 

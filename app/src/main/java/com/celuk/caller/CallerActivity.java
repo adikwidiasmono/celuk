@@ -1,13 +1,17 @@
 package com.celuk.caller;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
+import android.view.MenuItem;
 
 import com.celuk.database.model.CelukUser;
+import com.celuk.main.MainActivity;
 import com.celuk.main.R;
 import com.celuk.parent.BaseActivity;
+import com.celuk.receiver.ReceiverActivity;
 import com.utils.CelukState;
 
 public class CallerActivity extends BaseActivity implements
@@ -24,11 +28,25 @@ public class CallerActivity extends BaseActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-//        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(!isReady);
 
         isReady = getIntent().getBooleanExtra("READY", false);
 
         setupFragment(savedInstanceState);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                Intent intent = getIntent();
+                intent.setClass(getApplicationContext(), MainActivity.class);
+                startActivity(intent);
+                finish();
+                return (true);
+        }
+
+        return (super.onOptionsItemSelected(item));
     }
 
     @Override
@@ -41,10 +59,14 @@ public class CallerActivity extends BaseActivity implements
 
     @Override
     public void onBackPressed() {
-        if (isReady)
+        if (isReady) {
             moveTaskToBack(true);
-        else
-            super.onBackPressed();
+        } else {
+            Intent intent = getIntent();
+            intent.setClass(getApplicationContext(), MainActivity.class);
+            startActivity(intent);
+            finish();
+        }
     }
 
     private void setupFragment(Bundle savedInstanceState) {
@@ -120,13 +142,24 @@ public class CallerActivity extends BaseActivity implements
     }
 
     @Override
-    public void onCallerCallReceiver(int nextState) {
-        updateCallerState(nextState);
+    public void onCallerCallReceiver(int celukState) {
+        updateCallerState(celukState);
     }
 
     @Override
-    public void onReceiverStop(int nextState) {
-        updateCallerState(nextState);
+    public void onReceiverStop(int celukState) {
+        updateCallerState(celukState);
+    }
+
+    @Override
+    public void onEndCELUKPairing(int celukState) {
+        // Remove request id
+        mDatabase.child("users")
+                .child(getUserUid())
+                .child("requestId")
+                .setValue(null);
+
+        updateCallerState(celukState);
     }
 
     @Override

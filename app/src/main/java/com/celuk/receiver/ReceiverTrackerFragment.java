@@ -38,6 +38,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
@@ -49,6 +50,7 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.maps.android.PolyUtil;
 import com.utils.CelukSharedPref;
+import com.utils.CelukState;
 
 import java.net.HttpURLConnection;
 import java.util.List;
@@ -73,7 +75,6 @@ public class ReceiverTrackerFragment extends Fragment implements
     private final static String TAG = ReceiverTrackerFragment.class.getCanonicalName();
     private final static int LOCATION_REQUEST_PERMISSION = 99;
     boolean isFirstDisplay = true;
-    MarkerOptions callerMarker = null;
     private int celukState;
     private String fragmentName;
     private String callerPhoneNumber;
@@ -127,6 +128,12 @@ public class ReceiverTrackerFragment extends Fragment implements
                 CelukRequest celukRequest = dataSnapshot.getValue(CelukRequest.class);
                 if (celukRequest == null)
                     return;
+
+                if (celukRequest.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_HISTORY)) {
+                    if (mListener != null)
+                        mListener.onEndCELUKPairing(CelukState.CELUK_NO_ASSIGNMENT);
+                    return;
+                }
 
                 if (!celukRequest.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT))
                     return;
@@ -429,12 +436,15 @@ public class ReceiverTrackerFragment extends Fragment implements
         }
 
         if (isMapReady) {
-            if ((callerMarker != null) && (callerLatitude != 0) && (callerLongitude != 0)) {
+            if ((callerLatitude != 0) && (callerLongitude != 0)) {
                 LatLng latLngCaller = new LatLng(callerLatitude, callerLongitude);
                 googleMap.addMarker(new MarkerOptions()
                         .position(latLngCaller)
                         .title(tvCallerEmail.getText().toString())
-                );
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_marker_ball_pink_16dp)));
+
+                CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLng(latLngCaller);
+                googleMap.animateCamera(cameraUpdate);
             }
 
             if ((location.getAccuracy() < 30) && !hasDrawDirection && (callerLatitude != 0) && (callerLongitude != 0)) {
@@ -500,5 +510,7 @@ public class ReceiverTrackerFragment extends Fragment implements
      */
     public interface OnFragmentInteractionListener {
         void onChangeReceiverLocation(double latitude, double longitude);
+
+        void onEndCELUKPairing(int celukState);
     }
 }
