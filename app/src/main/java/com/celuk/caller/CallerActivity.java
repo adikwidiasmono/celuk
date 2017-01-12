@@ -28,8 +28,6 @@ public class CallerActivity extends BaseActivity implements
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        getSupportActionBar().setDisplayHomeAsUpEnabled(!isReady);
-
         isReady = getIntent().getBooleanExtra("READY", false);
 
         setupFragment(savedInstanceState);
@@ -124,6 +122,8 @@ public class CallerActivity extends BaseActivity implements
         // In case this activity was started with special instructions from an
         // Intent, pass the Intent's extras to the fragment as arguments
         activeFragment.setArguments(getIntent().getExtras());
+
+        getSupportActionBar().setDisplayHomeAsUpEnabled(!isReady);
 
         return activeFragment;
     }

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputEditText;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
@@ -17,7 +18,6 @@ import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,7 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     // Firebase DB
     protected DatabaseReference mDatabase;
     // UI references.
-    private EditText etEmail, etPassword;
+    private TextInputEditText etEmail, etPassword;
     private View mProgressView, mLoginFormView;
     private TextInputLayout tilEmail, tilPassword;
     private TextView tvAuthStatus;
@@ -72,14 +72,14 @@ public class LoginActivity extends AppCompatActivity {
 
         // Set up the login form.
         tilEmail = (TextInputLayout) findViewById(R.id.til_email);
-        etEmail = (EditText) findViewById(R.id.et_email);
+        etEmail = (TextInputEditText) findViewById(R.id.et_email);
 
         tilPassword = (TextInputLayout) findViewById(R.id.til_password);
-        etPassword = (EditText) findViewById(R.id.et_password);
+        etPassword = (TextInputEditText) findViewById(R.id.et_password);
         etPassword.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
-                if (id == R.id.login || id == EditorInfo.IME_NULL) {
+                if (id == R.id.login || id == EditorInfo.IME_ACTION_GO) {
                     signIn();
                     return true;
                 }

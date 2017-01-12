@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.celuk.database.model.CelukRequest;
@@ -46,6 +47,8 @@ public class CallerRequestFragment extends Fragment {
     private TextInputEditText etReceiverEmail;
     private FirebaseRecyclerAdapter<CelukRequest, CelukCallerRequestViewHolder> mAdapter;
     private RecyclerView mRecycler;
+    private TextView tvNoRequest;
+
     private Query qCelukUser;
     private ValueEventListener qCelukUserListener;
     private ValueEventListener qCallerRequestListener;
@@ -87,6 +90,7 @@ public class CallerRequestFragment extends Fragment {
 
         tilReceiverEmail = (TextInputLayout) view.findViewById(R.id.til_receiver_email);
         etReceiverEmail = (TextInputEditText) view.findViewById(R.id.et_receiver_email);
+        tvNoRequest = (TextView) view.findViewById(R.id.tv_no_request);
 
         // Set up FirebaseRecyclerAdapter with the Query
         qCallerRequest = mCelukReference.child("requests")
@@ -100,6 +104,7 @@ public class CallerRequestFragment extends Fragment {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot != null && dataSnapshot.getChildrenCount() > 0) {
+                    tvNoRequest.setVisibility(View.GONE);
                     for (DataSnapshot snapChild : dataSnapshot.getChildren()) {
                         CelukRequest req = snapChild.getValue(CelukRequest.class);
                         if (req == null)
@@ -110,6 +115,8 @@ public class CallerRequestFragment extends Fragment {
                                 mListener.onRequestAccepted(CelukState.CALLER_READY, snapChild.getKey());
                         }
                     }
+                } else {
+                    tvNoRequest.setText(getResources().getString(R.string.no_request));
                 }
             }
 
@@ -203,7 +210,7 @@ public class CallerRequestFragment extends Fragment {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            Toast.makeText(getContext(), "Trying request to " + email, Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Sending request to " + email, Toast.LENGTH_SHORT).show();
             etReceiverEmail.setText(null);
         }
 
@@ -211,79 +218,76 @@ public class CallerRequestFragment extends Fragment {
     }
 
     private void checkReceiverExist(final String callerEmail, final String receiverEmail) {
-        if (qCelukUser == null)
-            qCelukUser = mCelukReference.child("users")
-                    .orderByChild("email").equalTo(receiverEmail);
-        if (qCelukUserListener == null)
-            qCelukUserListener = new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot == null || dataSnapshot.getChildrenCount() != 1) {
-                        Toast.makeText(getContext(), "User doesn't exist, try another user", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
+        qCelukUser = mCelukReference.child("users")
+                .orderByChild("email").equalTo(receiverEmail);
+        qCelukUserListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                qCelukUser.removeEventListener(qCelukUserListener);
 
-                    CelukUser celukUser = dataSnapshot.getChildren().iterator().next()
-                            .getValue(CelukUser.class);
-                    if (celukUser != null) {
-                        Log.e(TAG, celukUser.toString());
-                        qCelukUser.removeEventListener(qCelukUserListener);
-                        checkIsRequestExsist(callerEmail, receiverEmail);
-                    } else {
-                        Toast.makeText(getContext(), "User doesn't exist, try another user", Toast.LENGTH_SHORT).show();
-                    }
+                if (dataSnapshot == null || dataSnapshot.getChildrenCount() != 1) {
+                    Log.e(TAG, "SATU");
+                    tilReceiverEmail.setError("User doesn't exist, try another user");
+                    return;
                 }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
+                CelukUser celukUser = dataSnapshot.getChildren().iterator().next()
+                        .getValue(CelukUser.class);
+                if (celukUser != null) {
+                    Log.e(TAG, celukUser.toString());
+                    checkIsRequestExsist(callerEmail, receiverEmail);
+                } else {
+                    Log.e(TAG, "DUA");
+                    tilReceiverEmail.setError("User doesn't exist, try another user");
                 }
-            };
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
 
         qCelukUser.addValueEventListener(qCelukUserListener);
     }
 
     private void checkIsRequestExsist(final String callerEmail, final String receiverEmail) {
-        if (qCallerRequestListener == null)
-            qCallerRequestListener = new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot != null && dataSnapshot.getChildrenCount() > 0) {
-                        boolean invalidReq = false;
-                        for (DataSnapshot snapChild : dataSnapshot.getChildren()) {
-                            CelukRequest req = snapChild.getValue(CelukRequest.class);
-                            if (req == null)
-                                break;
-                            // There is active state for this user
-                            if (req.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT)) {
-                                invalidReq = true;
-                                break;
-                            }
-                            if (req.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_PENDING) &&
-                                    req.getCaller().equalsIgnoreCase(callerEmail) &&
-                                    req.getReceiver().equalsIgnoreCase(receiverEmail)) {
-                                invalidReq = true;
-                                break;
-                            }
+        qCallerRequestListener = new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot != null && dataSnapshot.getChildrenCount() > 0) {
+                    qCallerRequest.removeEventListener(qCallerRequestListener);
+
+                    for (DataSnapshot snapChild : dataSnapshot.getChildren()) {
+                        CelukRequest req = snapChild.getValue(CelukRequest.class);
+                        if (req == null)
+                            break;
+
+                        // There is active state for this user
+                        if (req.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_ACCEPT)) {
+                            Log.e(TAG, "TIGA");
+                            tilReceiverEmail.setError("You have an active pair");
+                            return;
                         }
-
-                        qCallerRequest.removeEventListener(qCallerRequestListener);
-
-                        if (invalidReq) {
-                            Toast.makeText(getContext(), "Cannot send request to same user", Toast.LENGTH_SHORT).show();
+                        if (req.getStatus().equalsIgnoreCase(CelukRequest.REQUEST_STATUS_PENDING) &&
+                                req.getCaller().equalsIgnoreCase(callerEmail) &&
+                                req.getReceiver().equalsIgnoreCase(receiverEmail)) {
+                            Log.e(TAG, "EMPAT");
+                            tilReceiverEmail.setError("Cannot send request to same user");
                             return;
                         }
                     }
-
-                    // Saving new Celuk Request
-                    saveCelukRequest(callerEmail, receiverEmail);
                 }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
+                // Saving new Celuk Request
+                saveCelukRequest(callerEmail, receiverEmail);
+            }
 
-                }
-            };
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        };
 
         qCallerRequest.addValueEventListener(qCallerRequestListener);
     }

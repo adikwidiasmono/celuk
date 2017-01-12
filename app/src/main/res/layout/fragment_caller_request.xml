@@ -47,6 +47,17 @@
         android:background="@color/c_black"
         android:visibility="gone" />
 
+    <TextView
+        android:id="@+id/tv_no_request"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/v_separator"
+        android:layout_centerHorizontal="true"
+        android:gravity="center_vertical"
+        android:text="@string/loading"
+        android:textColor="@color/c_black"
+        android:textSize="16sp" />
+
     <android.support.v7.widget.RecyclerView
         android:id="@+id/rv_receiver_req_list"
         android:layout_width="match_parent"
